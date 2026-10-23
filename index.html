@@ -13,7 +13,7 @@
 :root{
   --bg:#f6f7f5; --panel:#ffffff; --sunk:#eef1ee; --rule:#dde3df; --rule-strong:#c4cdc8;
   --ink:#14201c; --ink-2:#4b5a55; --ink-3:#7f8c87;
-  --pc:#2a78d6; --ed:#eb6834; --alt:#1baf7a;
+  --pc:#2a78d6; --ed:#eb6834; --alt:#1baf7a; --e5:#7650c8;
   --div-lo:#184f95; --div-lo2:#6da7ec; --div-mid:#ecebe7; --div-hi2:#ee8a89; --div-hi:#b42f2f;
   --seq0:#dbe9fb; --seq1:#86b6ef; --seq2:#2a78d6; --seq3:#0d366b;
   --land:#e6eae6; --water:#f6f7f5;
@@ -27,7 +27,7 @@
     color-scheme:dark;
     --bg:#121816; --panel:#19201e; --sunk:#141b19; --rule:#2a3330; --rule-strong:#3a4541;
     --ink:#eef2f0; --ink-2:#b5c0bc; --ink-3:#86938e;
-    --pc:#3987e5; --ed:#d95926; --alt:#199e70;
+    --pc:#3987e5; --ed:#d95926; --alt:#199e70; --e5:#a084ee;
     --div-lo:#6da7ec; --div-lo2:#256abf; --div-mid:#383835; --div-hi2:#a83c3c; --div-hi:#f08f8e;
     --seq0:#16263a; --seq1:#1c5cab; --seq2:#5598e7; --seq3:#cde2fb;
     --land:#232c29; --water:#121816;
@@ -37,7 +37,7 @@
   color-scheme:dark;
   --bg:#121816; --panel:#19201e; --sunk:#141b19; --rule:#2a3330; --rule-strong:#3a4541;
   --ink:#eef2f0; --ink-2:#b5c0bc; --ink-3:#86938e;
-  --pc:#3987e5; --ed:#d95926; --alt:#199e70;
+  --pc:#3987e5; --ed:#d95926; --alt:#199e70; --e5:#a084ee;
   --div-lo:#6da7ec; --div-lo2:#256abf; --div-mid:#383835; --div-hi2:#a83c3c; --div-hi:#f08f8e;
   --seq0:#16263a; --seq1:#1c5cab; --seq2:#5598e7; --seq3:#cde2fb;
   --land:#232c29; --water:#121816;
@@ -53,7 +53,11 @@ h1 small{font-weight:500;color:var(--ink-3);font-size:13px;margin-left:8px;lette
 .chips{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-2);border:1px solid var(--rule);border-radius:999px;padding:3px 10px;background:var(--panel)}
 .sw{width:10px;height:10px;border-radius:3px;display:inline-block}
-.sw.pc{background:var(--pc)}.sw.ed{background:var(--ed)}.sw.alt{background:var(--alt)}
+.sw.pc{background:var(--pc)}.sw.ed{background:var(--ed)}.sw.alt{background:var(--alt)}.sw.e5{background:var(--e5)}
+.mono{font-family:var(--mono);font-size:12px;color:var(--ink-2)}
+.playbtn{font:600 12px var(--sans);min-width:34px;background:var(--panel);color:var(--ink);border:1px solid var(--rule-strong);border-radius:5px;padding:4px 8px;cursor:pointer}
+input[type=range]{accent-color:var(--e5)}
+.finding a,.panel a{color:var(--pc)}
 .sel-chip{margin-left:auto;font-family:var(--mono);font-size:12px}
 .sel-chip b{font-weight:500;color:var(--ink)}
 nav.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
@@ -158,6 +162,7 @@ table.data.ov thead th .chip.res{margin-left:6px}
       <button role="tab" data-tab="boundary" aria-selected="false">Day boundaries</button>
       <button role="tab" data-tab="corr" aria-selected="false">Correlations</button>
       <button role="tab" data-tab="lag" aria-selected="false">Rain → flow lag</button>
+      <button role="tab" data-tab="era5us" aria-selected="false">ERA5 0.25° US</button>
       <button role="tab" data-tab="datasets" aria-selected="false">Datasets</button>
     </nav>
   </div>
@@ -311,6 +316,79 @@ table.data.ov thead th .chip.res{margin-left:6px}
     <div class="grid g2" style="margin-top:16px">
       <div class="panel"><h2>Upstream → downstream gauge pairs</h2><p class="sub">Click a row. Lags in hours, from hourly point-cloud data, 1980–2021.</p><div class="scroll y"><table class="data" id="pairList"></table></div></div>
       <div class="panel"><h2 id="pairTitle">Pair response</h2><p class="sub">r(lag) between driver at time t and downstream flow at t + lag</p><div class="plot" id="pairCcf"></div><div class="plot short" id="pairMap"></div></div>
+    </div>
+  </section>
+
+  <!-- ============================================================ ERA5 0.25° US -->
+  <section class="tab" id="tab-era5us" hidden>
+    <p class="lede">The global hourly <b>ERA5 0.25°</b> archive cropped to the ERA5-DAYMET window, with <b>no regridding and no averaging</b>: native 0.25° cells, every hour, bit-identical values. Below: what the subset contains, what an hourly field looks like next to ERA5-DAYMET's daily one, and how well the two agree over 1980–2020. For the comparisons, each ERA5-DAYMET 10′ point is paired with the nearest 0.25° cell, and ERA5 hours are aggregated over a 24 h window. That pairing is only for this page; the stored data is unchanged.</p>
+    <div class="loading" id="e5Loading">Loading ERA5 0.25° US data…</div>
+    <div id="e5Body" hidden>
+      <div class="findings" id="e5Facts" style="grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr))"></div>
+
+      <div class="ds-head"><h2>Grid and domain</h2><p class="sub">Same box, two grids: 120 × 240 native ERA5 cells against 180 × 360 ERA5-DAYMET cells. The outline is ERA5-DAYMET's land mask, which covers the contiguous US only.</p><div class="seg" id="e5Static" role="group" aria-label="Static field"></div></div>
+      <div class="grid g2">
+        <div class="panel"><h2><span class="sw e5"></span> ERA5 0.25° US</h2><p class="sub" id="e5StaticSub"></p><div class="plot" id="e5StaticMap"></div></div>
+        <div class="panel"><h2><span class="sw ed"></span> ERA5-DAYMET 10′</h2><p class="sub" id="edStaticSub"></p><div class="plot" id="edStaticMap"></div></div>
+      </div>
+
+      <div class="ds-head"><h2>One day, hour by hour</h2><p class="sub">ERA5 0.25° keeps all 24 UTC hours. ERA5-DAYMET has one value for the day.</p></div>
+      <div class="controls">
+        <div class="ctl"><label for="e5Event">Day</label><select id="e5Event"></select></div>
+        <div class="ctl"><label>Hourly field</label><div class="seg" id="e5HourVar"></div></div>
+        <div class="ctl"><label for="e5Hour">Hour (UTC)</label><div style="display:flex;gap:8px;align-items:center"><input type="range" id="e5Hour" min="0" max="23" step="1" value="12" style="width:200px"><button type="button" class="playbtn" id="e5Play" aria-label="Play">▶</button><span class="mono" id="e5HourLab">12:00</span></div></div>
+      </div>
+      <div class="grid g-map">
+        <div class="panel"><h2 id="e5HourTitle">Hourly field</h2><p class="sub" id="e5HourSub"></p><div class="plot tall" id="e5HourMap"></div></div>
+        <div class="panel"><h2>Hourly cycle over the contiguous US</h2><p class="sub" id="e5CurveSub"></p><div class="plot tall" id="e5HourCurve"></div></div>
+      </div>
+      <div class="controls" style="margin-top:16px">
+        <div><h2>Same day, daily values side by side</h2><p class="sub" style="margin:0">ERA5 hours 00–23 UTC aggregated to one value, next to ERA5-DAYMET's value for that day. Both maps share one colour scale.</p></div>
+        <div class="ctl" style="margin-left:auto"><label for="e5DayVar">Variable</label><select id="e5DayVar"></select></div>
+      </div>
+      <div class="grid g2">
+        <div class="panel"><h3><span class="sw e5"></span> ERA5 0.25°, aggregated from 24 hours</h3><p class="sub" id="e5DaySubA"></p><div class="plot" id="e5DayMapA"></div></div>
+        <div class="panel"><h3><span class="sw ed"></span> ERA5-DAYMET 10′, daily</h3><p class="sub" id="e5DaySubB"></p><div class="plot" id="e5DayMapB"></div></div>
+      </div>
+
+      <div class="ds-head"><h2>Hourly series at a city</h2><p class="sub" id="e5PtSub"></p></div>
+      <div class="controls">
+        <div class="ctl"><label for="e5Pt">City</label><select id="e5Pt"></select></div>
+        <div class="ctl"><label>Range</label><div class="seg" id="e5PtRange"></div></div>
+      </div>
+      <div class="panel">
+        <div class="legend-inline"><span><i class="ln" style="border-color:var(--e5)"></i>ERA5 0.25°, hourly</span><span><i class="ln" style="border-color:var(--ed)"></i>ERA5-DAYMET, daily</span><span><i class="ln" style="border-color:var(--ed);border-top-style:dashed"></i>ERA5-DAYMET tmax / tmin (Daymet)</span><span><i class="ln" style="border-color:var(--e5);border-top-style:dotted"></i>ERA5 0.25°, daily total of the hours</span></div>
+        <div class="plot" id="e5PtPlot" style="height:560px"></div>
+      </div>
+
+      <div class="ds-head"><h2>Agreement with ERA5-DAYMET, 1980–2020</h2><p class="sub">Every day of 41 years over the CONUS land cells of ERA5-DAYMET. ERA5 aggregated over the UTC day, or over a 24 h window shifted to Daymet's day for the three Daymet fields. Bias = ERA5 0.25° − ERA5-DAYMET. r(Δday) correlates day-to-day changes, which is sensitive to timing and not inflated by the seasonal cycle.</p></div>
+      <div class="panel"><div class="scroll"><table class="data" id="e5Table"></table></div></div>
+      <div class="controls" style="margin-top:16px">
+        <div class="ctl"><label for="e5CellVar">Variable</label><select id="e5CellVar"></select></div>
+        <div class="ctl"><label>Map</label><div class="seg" id="e5CellMetric"></div></div>
+        <div class="ctl"><label>ERA5 window</label><div class="seg" id="e5CellWin"></div></div>
+        <div class="ctl"><label for="e5Year">Year (series)</label><select id="e5Year"></select></div>
+      </div>
+      <div class="grid g-map">
+        <div class="panel"><h2 id="e5CellTitle">Per-cell agreement</h2><p class="sub" id="e5CellSub"></p><div class="plot tall" id="e5CellMap"></div></div>
+        <div class="grid" style="align-content:start">
+          <div class="panel"><h3 id="e5SerTitle">Daily CONUS-land mean</h3><p class="sub">UTC-day aggregation of ERA5 against ERA5-DAYMET</p><div class="plot" id="e5Ser"></div></div>
+          <div class="panel"><h3>Monthly climatology, 1980–2020</h3><p class="sub">CONUS-land mean</p><div class="plot short" id="e5Clim"></div></div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:16px">
+        <h2>Which 24-hour window matches each ERA5-DAYMET field?</h2>
+        <p class="sub">Daily data can't answer this; hourly data can. ERA5 hours are aggregated over windows starting <i>s</i> hours from 00 UTC, and r(Δday) with ERA5-DAYMET is pooled over every second CONUS land cell, 1980–2020. ERA5-sourced fields should peak at s = 0. Daymet fields peak where Daymet's local-time day begins (see <a href="#boundary" data-goto="boundary">Day boundaries</a> for the same test against CAMELSH).</p>
+        <div class="plot" id="e5Scan" style="height:380px"></div>
+      </div>
+      <div class="ds-head"><h2>Are the "Daymet" fields independent of ERA5?</h2><p class="sub">ERA5-DAYMET labels tmax, tmin and precipitation as Daymet. If they were station-based Daymet, they would differ from a reanalysis in fine spatial detail, especially precipitation over mountains.</p></div>
+      <div class="grid g-map">
+        <div class="grid" style="align-content:start"><div id="e5ProvCard"></div>
+          <div class="panel"><h3><span class="sw e5"></span> ERA5 0.25°, hourly precipitation summed over the shifted window</h3><p class="sub" id="e5AnnSubA"></p><div class="plot" id="e5AnnA"></div></div></div>
+        <div class="panel"><h3><span class="sw ed"></span> ERA5-DAYMET total_precipitation_24hr, summed</h3><p class="sub" id="e5AnnSubB"></p><div class="plot tall" id="e5AnnB"></div></div>
+      </div>
+      <p class="note" id="e5Gen"></p>
     </div>
   </section>
 
@@ -741,14 +819,289 @@ function renderPairs() {
     mapLayout({ xaxis: { range: [Math.min(...lons) - pad, Math.max(...lons) + pad], visible: false }, yaxis: { range: [Math.min(...lats) - pad * 0.7, Math.max(...lats) + pad * 0.7], visible: false, scaleanchor: "x", scaleratio: 1.27 } }));
 }
 
+/* ---------------------------------------------------------------- ERA5 0.25° US (lazy-loaded: data/era5us.json) */
+const E = { M: null, BUF: {}, loading: null, ev: 0, hv: "t2m", hour: 12, dv: "t2m", pt: 7, ptRange: "cold", cv: "prcp", cm: "rdd", cw: "utc", year: 2019, st: "oro", timer: null, z: {} };
+async function e5Load() {
+  if (E.M) return;
+  if (!E.loading) E.loading = (async () => {
+    const m = await (await fetch("data/era5us.json")).json();
+    const files = [...new Set(Object.values(m.arrays).map((a) => a.file))];
+    await Promise.all(files.map(async (f) => {
+      const t = await (await fetch("data/" + f)).text(), bin = atob(t.trim()), u = new Uint8Array(bin.length);
+      for (let k = 0; k < bin.length; k++) u[k] = bin.charCodeAt(k);
+      E.BUF[f] = u.buffer;
+    }));
+    E.M = m; e5Init();
+  })();
+  await E.loading;
+}
+function earr(name) {
+  const a = E.M.arrays[name]; if (!a) throw new Error("missing array " + name);
+  if (a._v) return a._v;
+  const n = a.shape.reduce((x, y) => x * y, 1), buf = E.BUF[a.file]; let out;
+  if (a.dtype === "f4") out = new Float32Array(buf, a.offset, n);
+  else if (a.dtype === "u1") out = new Uint8Array(buf, a.offset, n);
+  else if (a.dtype === "i2") { const q = new Int16Array(buf, a.offset, n); out = new Float32Array(n); for (let i = 0; i < n; i++) out[i] = q[i] === -32768 ? NaN : q[i] * a.scale; }
+  else { // q1: uint8 quantised over [lo, hi], optionally in sqrt space; 255 = NaN
+    const q = new Uint8Array(buf, a.offset, n), sq = a.tf === "sqrt", lo = sq ? Math.sqrt(a.lo) : a.lo, w = ((sq ? Math.sqrt(a.hi) : a.hi) - lo) / 254;
+    out = new Float32Array(n);
+    for (let i = 0; i < n; i++) { if (q[i] === 255) { out[i] = NaN; continue; } const t = lo + q[i] * w; out[i] = sq ? t * t : t; }
+  }
+  a._v = out; return out;
+}
+const eframe = (name, k) => { const s = E.M.arrays[name].shape, w = s[1] * s[2]; return earr(name).subarray(k * w, (k + 1) * w); };
+const erow = (name, k) => { const s = E.M.arrays[name].shape, w = s.slice(1).reduce((x, y) => x * y, 1); return earr(name).subarray(k * w, (k + 1) * w); };
+const ecomp = (k) => E.M.comps.find((c) => c.key === k);
+function toZ(a, g, keep) {
+  const z = []; for (let y = 0; y < g.ny; y++) { const r = new Array(g.nx); for (let x = 0; x < g.nx; x++) { const i = y * g.nx + x, v = a[i]; r[x] = (isFinite(v) && (!keep || keep[i])) ? v : null; } z.push(r); }
+  return z;
+}
+function heat(g, z, cs, unit, extra = {}) {
+  return { type: "heatmap", z, x0: g.lon0, dx: g.d, y0: g.lat0, dy: g.d, zsmooth: false, zmin: cs.zmin, zmax: cs.zmax, colorscale: cs.scale,
+    hovertemplate: `%{y:.3f}°N %{x:.3f}°<br>%{z:.3~f} ${unit}<extra></extra>`,
+    colorbar: { thickness: 10, len: 0.7, x: 1, xpad: 2, outlinewidth: 0, tickfont: { size: 10, color: css("--ink-2") }, title: { text: unit, side: "right", font: { size: 11, color: css("--ink-2") } } }, ...extra };
+}
+function outline() {
+  const g = E.M.grid_ed;
+  if (!E.z.mask) E.z.mask = toZ(earr("mask_ed"), g);
+  return { type: "contour", z: E.z.mask, x0: g.lon0, dx: g.d, y0: g.lat0, dy: g.d, contours: { start: 0.5, end: 0.5, size: 1, coloring: "none" },
+    line: { color: css("--ink-2"), width: 0.9, smoothing: 0.6 }, showscale: false, hoverinfo: "skip" };
+}
+const e5Map = (extra = {}) => base({ margin: { l: 4, r: 4, t: 4, b: 4 }, dragmode: "pan",
+  xaxis: { range: [-125.25, -64.75], visible: false }, yaxis: { range: [23.9, 54.1], visible: false, scaleanchor: "x", scaleratio: 1.27 }, ...extra });
+const precipScale = () => [[0, css("--panel")], [0.04, css("--seq0")], [0.35, css("--seq1")], [0.7, css("--seq2")], [1, css("--seq3")]];
+const tempCs = (lo, hi) => { const m = Math.max(Math.abs(lo), Math.abs(hi)); return { scale: divScale(), zmin: -m, zmax: m }; }; // 0 °C at the midpoint
+function scaleFor(key, lo, hi) {
+  if (["t2m", "tmax", "tmin", "t850"].includes(key)) return tempCs(lo, hi);
+  if (key === "prcp") return { scale: precipScale(), zmin: 0, zmax: hi };
+  if (["u10", "v10"].includes(key)) { const m = Math.max(Math.abs(lo), Math.abs(hi)); return { scale: divScale(), zmin: -m, zmax: m }; }
+  return { scale: seqScale(), zmin: lo, zmax: hi };
+}
+const hhmm = (h) => String(h).padStart(2, "0") + ":00";
+const DAYMS = 864e5;
+const edDate = (y, k) => Date.UTC(y, 0, 1) + k * DAYMS;
+
+function e5Init() {
+  const M5 = E.M, f = M5.facts;
+  const card = (st, tag, h, kv) => `<article class="finding"><span class="pill ${st}"><i></i>${tag}</span><h2>${h}</h2><dl class="kv">${kv.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl></article>`;
+  $("e5Facts").innerHTML = [
+    card("info", "Grid", `${f.n_lat} × ${f.n_lon} cells at native 0.25°`, [["n_lat : n_lon", `${f.n_lat} : ${f.n_lon} = 1 : ${f.n_lon / f.n_lat}`], ["latitude", `${f.lat[0]} … ${f.lat[1]} °N, ascending`], ["longitude", `${f.lon[0]} … ${f.lon[1]} ° (0–360 in file)`], ["source rows / cols", `[${f.index.lat}) / [${f.index.lon})`]]),
+    card("info", "Time", "Hourly, unchanged", [["first", f.first + " UTC"], ["last", f.last + " UTC"], ["steps", f.n_hours.toLocaleString("en-US") + " h"], ["gaps", `${f.n_gaps} × Dec 31 of leap years (absent in source)`]]),
+    card("info", "Storage", `${f.n_stores} yearly Zarr stores`, [["path", `<span style="word-break:break-all">${f.path}/</span>`], ["layout", "split/YEAR.zarr, chunk = 438 h × full window"], ["variables", f.n_vars + " (same keys as source)"], ["size", `${f.size} · ${f.n_files.toLocaleString("en-US")} files`]]),
+    card(f.status === "PASS" ? "ok" : "crit", f.status === "PASS" ? "Validated" : "Check failed", "Bit-identical spatial subset", [["value check", `${f.frames.toLocaleString("en-US")} frames vs source, 0 mismatches`], ["read-back", "every shard × variable"], ["timestamps", "identical to source"], ["source files", "unmodified"]]),
+  ].join("");
+  const segE = (id, list, key, cb) => { const el = $(id); el.innerHTML = list.map(([v, l]) => `<button type="button" data-v="${v}" aria-pressed="${String(E[key]) === String(v)}">${l}</button>`).join("");
+    el.onclick = (e) => { const b = e.target.closest("button"); if (!b || b.disabled) return; E[key] = b.dataset.v; el.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", x === b ? "true" : "false")); cb(); }; };
+  segE("e5Static", [["oro", "Orography"], ["lsm", "Land–sea mask"]], "st", e5Static);
+  opts("e5Event", M5.events.map((ev, i) => [i, `${ev.date} · ${ev.label}`]), 0);
+  $("e5Event").onchange = (e) => { E.ev = +e.target.value; E.hv = M5.events[E.ev].focus; segE("e5HourVar", M5.hourly_vars.map((h) => [h.key, h.label]), "hv", e5Hour); e5Hour(); e5Day(); };
+  E.hv = M5.events[0].focus;
+  segE("e5HourVar", M5.hourly_vars.map((h) => [h.key, h.label]), "hv", e5Hour);
+  $("e5Hour").oninput = (e) => { E.hour = +e.target.value; e5Hour(); };
+  $("e5Play").onclick = () => {
+    if (E.timer) { clearInterval(E.timer); E.timer = null; $("e5Play").textContent = "▶"; $("e5Play").setAttribute("aria-label", "Play"); return; }
+    $("e5Play").textContent = "❚❚"; $("e5Play").setAttribute("aria-label", "Pause");
+    E.timer = setInterval(() => { if (S.tab !== "era5us") { clearInterval(E.timer); E.timer = null; $("e5Play").textContent = "▶"; return; } E.hour = (E.hour + 1) % 24; $("e5Hour").value = E.hour; e5Hour(); }, 600);
+  };
+  opts("e5DayVar", M5.comps.map((c) => [c.key, `${c.label} (${c.ed_source})`]), "t2m");
+  $("e5DayVar").onchange = (e) => { E.dv = e.target.value; e5Day(); };
+  const P = M5.point_series;
+  $("e5PtSub").textContent = `${P.year}, every hour, at the 0.25° cell nearest each city. ERA5-DAYMET values are drawn over their labelled day (00–24 UTC); its Daymet fields actually cover a local-time day.`;
+  opts("e5Pt", P.points.map((p, i) => [i, p.name]), E.pt);
+  $("e5Pt").onchange = (e) => { E.pt = +e.target.value; e5Pt(); };
+  segE("e5PtRange", [["cold", "Jan 25 – Feb 5"], ["summer", "Jul 1 – 14"], ["year", "Whole year"]], "ptRange", e5Pt);
+  opts("e5CellVar", M5.comps.map((c) => [c.key, `${c.label} (${c.ed_source})`]), E.cv);
+  const setWin = () => { const c = ecomp(E.cv); if (!c.windows.dm) E.cw = "utc";
+    segE("e5CellWin", [["utc", "UTC day"], ["dm", c.daymet_offset != null ? `Daymet day (${c.daymet_offset} h)` : "Daymet day"]], "cw", () => { e5Cell(); });
+    $("e5CellWin").querySelector('[data-v="dm"]').disabled = !c.windows.dm; };
+  $("e5CellVar").onchange = (e) => { E.cv = e.target.value; setWin(); e5Cell(); e5Ser(); };
+  segE("e5CellMetric", [["bias", "Bias"], ["r", "r (daily)"], ["rdd", "r (Δday)"]], "cm", e5Cell);
+  setWin();
+  opts("e5Year", M5.years.slice().reverse().map((y) => [y, y]), E.year);
+  $("e5Year").onchange = (e) => { E.year = +e.target.value; e5Ser(); };
+  document.querySelectorAll('#tab-era5us [data-goto]').forEach((a) => a.onclick = (e) => { e.preventDefault(); showTab(a.dataset.goto); window.scrollTo(0, 0); });
+  $("e5Gen").innerHTML = `Generated ${M5.generated} by <code>hydroviz/era5us_viz.py</code> from the stores in <code>${f.path}</code>. Event and city maps are 8-bit quantised for display; table values are exact.`;
+}
+
+function e5Static() {
+  const g5 = E.M.grid_e5, gd = E.M.grid_ed, oro = E.st === "oro";
+  const a = earr(oro ? "oro_e5" : "lsm_e5"), b = oro ? earr("oro_ed") : earr("mask_ed");
+  const cs = oro ? { scale: seqScale(), zmin: 0, zmax: 3500 } : { scale: [[0, css("--sunk")], [1, css("--seq2")]], zmin: 0, zmax: 1 };
+  const unit = oro ? "m" : "";
+  draw("e5StaticMap", [heat(g5, toZ(a, g5), cs, unit), outline()], e5Map());
+  draw("edStaticMap", [heat(gd, toZ(b, gd), cs, unit), outline()], e5Map());
+  $("e5StaticSub").textContent = oro ? "Surface geopotential ÷ g, in metres. 0.25° ≈ 28 km." : "ERA5 land–sea fraction (0–1), a physical mask covering Canada and Mexico as well.";
+  $("edStaticSub").textContent = oro ? "Orography in metres. 10′ ≈ 18.5 km." : "ERA5-DAYMET's land_sea_mask is binary and marks CONUS land only (0 over ocean, Canada and Mexico).";
+}
+
+function e5Hour() {
+  const ev = E.M.events[E.ev], hv = E.M.hourly_vars.find((h) => h.key === E.hv), g5 = E.M.grid_e5;
+  const name = `ev_${ev.key}_h_${hv.key}`, A = E.M.arrays[name];
+  const cs = hv.key === "t2m" ? tempCs(A.lo, A.hi) : { scale: hv.key === "prcp" ? precipScale() : seqScale(), zmin: A.lo, zmax: A.hi };
+  $("e5HourLab").textContent = hhmm(E.hour) + " UTC";
+  $("e5HourTitle").textContent = `${hv.label}, ${ev.date} ${hhmm(E.hour)} UTC`;
+  $("e5HourSub").textContent = `${ev.label}. ERA5 0.25°, one of 24 hourly fields for this day. ${hv.key === "prcp" ? "Precipitation is the 1 h total ending at this hour." : ""}`;
+  draw("e5HourMap", [heat(g5, toZ(eframe(name, E.hour), g5), cs, hv.unit, { zsmooth: false }), outline()], e5Map());
+  // CONUS-mean hourly curve, with ERA5-DAYMET's single daily value
+  const hm = ev.hourly_conus_mean[hv.key], hrs = Array.from({ length: 24 }, (_, h) => h), dm = ev.daily_conus_mean;
+  const tr = [{ x: hrs, y: hm, type: "scatter", mode: "lines+markers", name: "ERA5 0.25°, hourly", line: { color: css("--e5"), width: 2 }, marker: { size: 5 }, hovertemplate: `%{x}:00 UTC: %{y:.2f} ${hv.unit}<extra></extra>` }];
+  const shapes = [{ type: "line", x0: E.hour, x1: E.hour, yref: "paper", y0: 0, y1: 1, line: { color: css("--ink-3"), width: 1, dash: "dot" } }];
+  const hline = (v, label, dash) => tr.push({ x: [0, 23], y: [v, v], type: "scatter", mode: "lines", name: label, line: { color: css("--ed"), width: 2, dash }, hovertemplate: `${label}: %{y:.2f}<extra></extra>` });
+  let ylab = hv.unit, sub = "";
+  if (hv.key === "t2m") {
+    hline(dm.t2m.ed, "ERA5-DAYMET daily mean", "solid"); hline(dm.tmax.ed, "ERA5-DAYMET tmax (Daymet)", "dash"); hline(dm.tmin.ed, "ERA5-DAYMET tmin (Daymet)", "dash");
+    sub = `Mean over CONUS land. Hourly ERA5 runs from ${fmt(Math.min(...hm), 1)} to ${fmt(Math.max(...hm), 1)} °C; ERA5-DAYMET's daily mean is ${fmt(dm.t2m.ed, 1)} °C.`;
+  } else if (hv.key === "prcp") {
+    let c = 0; const cum = hm.map((v) => (c += v));
+    tr.push({ x: hrs, y: cum, yaxis: "y2", type: "scatter", mode: "lines", name: "ERA5 0.25°, running daily total", line: { color: css("--e5"), width: 1.5, dash: "dot" }, hovertemplate: "%{x}:00: %{y:.2f} mm so far<extra></extra>" });
+    tr.push({ x: [0, 23], y: [dm.prcp.ed, dm.prcp.ed], yaxis: "y2", type: "scatter", mode: "lines", name: "ERA5-DAYMET daily total (Daymet)", line: { color: css("--ed"), width: 2 }, hovertemplate: "%{y:.2f} mm<extra></extra>" });
+    sub = `Mean over CONUS land, mm h⁻¹ (left) and the running total in mm (right). ERA5 day total ${fmt(dm.prcp.e5, 2)} mm vs ERA5-DAYMET ${fmt(dm.prcp.ed, 2)} mm.`;
+  } else {
+    sub = "Mean over CONUS land. ERA5-DAYMET stores daily-mean U and V only, so it has no daily wind speed to compare.";
+  }
+  $("e5CurveSub").textContent = sub;
+  draw("e5HourCurve", tr, base({ showlegend: true, legend: { orientation: "h", y: -0.18, x: 0 }, shapes, hovermode: "x unified", margin: { l: 52, r: hv.key === "prcp" ? 56 : 12, t: 8, b: 36 },
+    xaxis: { title: { text: "hour (UTC)" }, dtick: 3, range: [-0.5, 23.5] }, yaxis: { title: { text: ylab } },
+    ...(hv.key === "prcp" ? { yaxis2: { overlaying: "y", side: "right", title: { text: "mm" }, showgrid: false, rangemode: "tozero", tickmode: "auto", nticks: 5, tickfont: { color: css("--ink-2"), size: 11 } } } : {}) }));
+}
+
+function e5Day() {
+  const ev = E.M.events[E.ev], c = ecomp(E.dv), g5 = E.M.grid_e5, gd = E.M.grid_ed;
+  const na = `ev_${ev.key}_d_${c.key}_e5`, nb = `ev_${ev.key}_d_${c.key}_ed`, A = E.M.arrays[na];
+  const cs = scaleFor(c.key, A.lo, A.hi), dm = ev.daily_conus_mean[c.key];
+  const agg = { mean: "mean", max: "maximum", min: "minimum", sum: "sum" }[c.agg];
+  draw("e5DayMapA", [heat(g5, toZ(earr(na), g5), cs, c.unit), outline()], e5Map());
+  draw("e5DayMapB", [heat(gd, toZ(earr(nb), gd), cs, c.unit), outline()], e5Map());
+  $("e5DaySubA").textContent = `${c.label}: ${agg} of ERA5 ${c.era5_var}, ${ev.date} 00–23 UTC. CONUS-land mean ${fmt(dm.e5, 2)} ${c.unit}.`;
+  $("e5DaySubB").textContent = `${c.ed_var} (from ${c.ed_source}), step ${ev.ed_step} of ${ev.date.slice(0, 4)}. CONUS-land mean ${fmt(dm.ed, 2)} ${c.unit}.`;
+}
+
+function e5Pt() {
+  const P = E.M.point_series, i = E.pt, p = P.points[i], t0 = Date.parse(P.start + ":00Z"), nh = P.n_hours;
+  const xh = Array.from({ length: nh }, (_, k) => t0 + k * 36e5);
+  const nd = E.M.arrays.pt_d_t2m.shape[1], xd = Array.from({ length: nd + 1 }, (_, k) => edDate(P.year, k));
+  const step = (a) => toNull(Array.from(a).concat([a[a.length - 1]]));
+  const T = erow("pt_h_t2m", i), Pr = erow("pt_h_prcp", i), U = erow("pt_h_u10", i);
+  const daysum = []; for (let k = 0; k < nd; k++) { let s = 0; for (let h = 0; h < 24; h++) s += Pr[k * 24 + h]; daysum.push(s); }
+  const e5c = css("--e5"), edc = css("--ed");
+  const tr = [
+    { x: xh, y: toNull(T), type: "scattergl", mode: "lines", line: { color: e5c, width: 1 }, name: "ERA5 0.25° hourly", hovertemplate: "%{y:.1f} °C<extra>ERA5 hourly</extra>" },
+    { x: xd, y: step(erow("pt_d_t2m", i)), type: "scatter", mode: "lines", line: { color: edc, width: 2, shape: "hv" }, name: "ERA5-DAYMET mean", hovertemplate: "%{y:.1f} °C<extra>ED mean</extra>" },
+    { x: xd, y: step(erow("pt_d_tmax", i)), type: "scatter", mode: "lines", line: { color: edc, width: 1.2, dash: "dash", shape: "hv" }, name: "ERA5-DAYMET tmax", hovertemplate: "%{y:.1f} °C<extra>ED tmax</extra>" },
+    { x: xd, y: step(erow("pt_d_tmin", i)), type: "scatter", mode: "lines", line: { color: edc, width: 1.2, dash: "dash", shape: "hv" }, name: "ERA5-DAYMET tmin", hovertemplate: "%{y:.1f} °C<extra>ED tmin</extra>" },
+    { x: xh, y: toNull(Pr), yaxis: "y2", type: "bar", marker: { color: e5c }, name: "ERA5 0.25° hourly precip", hovertemplate: "%{y:.2f} mm h⁻¹<extra>ERA5 hourly</extra>" },
+    { x: xd, y: step(daysum), yaxis: "y3", type: "scatter", mode: "lines", line: { color: e5c, width: 1.5, dash: "dot", shape: "hv" }, name: "ERA5 0.25° daily total", hovertemplate: "%{y:.1f} mm<extra>ERA5 day total</extra>" },
+    { x: xd, y: step(erow("pt_d_prcp", i)), yaxis: "y3", type: "scatter", mode: "lines", line: { color: edc, width: 2, shape: "hv" }, name: "ERA5-DAYMET precip", hovertemplate: "%{y:.1f} mm<extra>ED (Daymet)</extra>" },
+    { x: xh, y: toNull(U), yaxis: "y4", type: "scattergl", mode: "lines", line: { color: e5c, width: 1 }, name: "ERA5 0.25° hourly U", hovertemplate: "%{y:.1f} m s⁻¹<extra>ERA5 hourly</extra>" },
+    { x: xd, y: step(erow("pt_d_u10", i)), yaxis: "y4", type: "scatter", mode: "lines", line: { color: edc, width: 2, shape: "hv" }, name: "ERA5-DAYMET U", hovertemplate: "%{y:.1f} m s⁻¹<extra>ED</extra>" },
+  ];
+  const R = { cold: [Date.UTC(P.year, 0, 25), Date.UTC(P.year, 1, 5)], summer: [Date.UTC(P.year, 6, 1), Date.UTC(P.year, 6, 15)], year: [xd[0], xd[nd]] }[E.ptRange];
+  const ax = (dom, title, extra = {}) => ({ domain: dom, title: { text: title }, ...extra });
+  draw("e5PtPlot", tr, base({ hovermode: "x", bargap: 0, margin: { l: 56, r: 52, t: 8, b: 30 },
+    xaxis: { type: "date", range: R, anchor: "y4" },
+    yaxis: ax([0.66, 1], "2 m temp (°C)"), yaxis2: ax([0.34, 0.6], "mm h⁻¹", { rangemode: "tozero" }),
+    yaxis3: { overlaying: "y2", side: "right", title: { text: "mm day⁻¹" }, rangemode: "tozero", showgrid: false, tickmode: "auto", nticks: 4, tickfont: { color: css("--ink-2"), size: 11 } },
+    yaxis4: ax([0, 0.28], "10 m U (m s⁻¹)", { zeroline: true }) }));
+  $("e5PtSub").textContent = `${P.year}, every hour, at the 0.25° cell centred ${p.e5[0].toFixed(3)}°N ${p.e5[1].toFixed(2)}° (ERA5-DAYMET point ${p.ed[0].toFixed(2)}°N ${p.ed[1].toFixed(2)}°). ERA5-DAYMET values are drawn over their labelled day (00–24 UTC); its Daymet fields actually cover a local-time day.`;
+}
+
+function e5Table() {
+  const cols = ["Variable", "ED source", "ERA5 from hourly", "Window", "Bias", "RMSE", "r (daily, per cell)", "r (Δday, per cell)", "Best window (scan)"];
+  const rows = [];
+  for (const c of E.M.comps) for (const [tag, w] of Object.entries(c.windows)) {
+    const src = c.ed_source === "Daymet" ? `<span class="src" style="margin:0">Daymet</span>` : "ERA5";
+    rows.push(`<tr class="clickable${c.key === E.cv && tag === E.cw ? " on" : ""}" data-k="${c.key}" data-w="${tag}"><td>${tag === "utc" ? c.label : ""} <span style="color:var(--ink-3)">${tag === "utc" ? c.unit : ""}</span></td><td style="text-align:left">${tag === "utc" ? src : ""}</td><td style="text-align:left">${tag === "utc" ? `${c.agg} of <code>${c.era5_var}</code>` : ""}</td>` +
+      `<td style="text-align:left">${tag === "utc" ? "UTC day" : `Daymet day (s = ${w.offset} h)`}</td><td>${fmt(w.bias, 3)}</td><td>${fmt(w.rmse, 3)}</td><td>${fmt(w.cell_median_r, 3)}</td><td>${fmt(w.cell_median_r_dd, 3)}</td><td>${tag === "utc" ? (c.scan_best >= 0 ? "+" : "") + c.scan_best + " h" : ""}</td></tr>`);
+  }
+  $("e5Table").innerHTML = `<tr>${cols.map((c, k) => `<th${k < 4 ? ' style="text-align:left"' : ""}>${c}</th>`).join("")}</tr>` + rows.join("");
+  $("e5Table").onclick = (e) => { const r = e.target.closest("tr[data-k]"); if (!r) return; E.cv = r.dataset.k; E.cw = r.dataset.w; $("e5CellVar").value = E.cv; $("e5CellVar").onchange({ target: $("e5CellVar") }); E.cw = r.dataset.w;
+    $("e5CellWin").querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", x.dataset.v === E.cw ? "true" : "false")); e5Cell(); };
+}
+
+function e5Cell() {
+  const c = ecomp(E.cv), w = c.windows[E.cw] || c.windows.utc, tag = c.windows[E.cw] ? E.cw : "utc", gd = E.M.grid_ed;
+  const name = `cell_${c.key}_${tag}_${E.cm}`, A = E.M.arrays[name], mask = earr("mask_ed");
+  const isBias = E.cm === "bias";
+  const vals = earr(name), fin = []; for (let i = 0; i < vals.length; i++) if (mask[i] && isFinite(vals[i])) fin.push(vals[i]);
+  const cs = isBias ? { scale: divScale(), zmin: A.lo, zmax: A.hi } : { scale: seqScale(), zmin: Math.max(0, quantile(fin, 0.02)), zmax: 1 };
+  draw("e5CellMap", [heat(gd, toZ(vals, gd, mask), cs, isBias ? c.unit : "r"), outline()], e5Map());
+  const win = tag === "utc" ? "UTC day" : `Daymet day (window from ${w.offset} h)`;
+  $("e5CellTitle").textContent = `${c.label}: ${isBias ? "bias, ERA5 0.25° − ERA5-DAYMET" : E.cm === "r" ? "correlation of daily values" : "correlation of day-to-day changes"}`;
+  $("e5CellSub").textContent = `${c.agg} of hourly ERA5 over the ${win}, paired with ${c.ed_var} (${c.ed_source}) at every CONUS land cell, 1980–2020. Median over cells: ${isBias ? fmt(w.cell_median_bias, 3) + " " + c.unit : fmt(E.cm === "r" ? w.cell_median_r : w.cell_median_r_dd, 3)}.`;
+  document.querySelectorAll("#e5Table tr[data-k]").forEach((r) => r.classList.toggle("on", r.dataset.k === c.key && r.dataset.w === tag));
+}
+
+function e5Ser() {
+  const c = ecomp(E.cv), Y = E.M.years, spy = E.M.steps_per_year, yi = Y.indexOf(E.year);
+  const a = earr(`ser_${c.key}_e5`), b = earr(`ser_${c.key}_ed`);
+  const x = Array.from({ length: spy }, (_, k) => edDate(E.year, k));
+  const sa = a.subarray(yi * spy, (yi + 1) * spy), sb = b.subarray(yi * spy, (yi + 1) * spy);
+  $("e5SerTitle").textContent = `${c.label}, ${E.year}: daily CONUS-land mean`;
+  draw("e5Ser", [
+    { x, y: toNull(sa), type: "scatter", mode: "lines", name: "ERA5 0.25° (UTC day)", line: { color: css("--e5"), width: 1.5 } },
+    { x, y: toNull(sb), type: "scatter", mode: "lines", name: `ERA5-DAYMET (${c.ed_source})`, line: { color: css("--ed"), width: 1.5 } }],
+    base({ showlegend: true, hovermode: "x unified", xaxis: { type: "date" }, yaxis: { title: { text: c.unit } } }));
+  const ma = new Array(12).fill(0), mb = new Array(12).fill(0), n = new Array(12).fill(0);
+  Y.forEach((y, j) => { for (let k = 0; k < spy; k++) { const m = new Date(edDate(y, k)).getUTCMonth(), va = a[j * spy + k], vb = b[j * spy + k]; if (isFinite(va) && isFinite(vb)) { ma[m] += va; mb[m] += vb; n[m]++; } } });
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  draw("e5Clim", [
+    { x: months, y: ma.map((v, m) => v / n[m]), name: "ERA5 0.25°", type: "scatter", mode: "lines+markers", line: { color: css("--e5"), width: 2 }, marker: { size: 7 } },
+    { x: months, y: mb.map((v, m) => v / n[m]), name: "ERA5-DAYMET", type: "scatter", mode: "lines+markers", line: { color: css("--ed"), width: 2 }, marker: { size: 7 } }],
+    base({ showlegend: true, hovermode: "x unified", yaxis: { title: { text: c.unit } } }));
+}
+
+function e5Scan() {
+  const off = E.M.offsets, tr = [], dash = ["solid", "dash", "dot"];
+  let nd = 0, ne = 0;
+  const nERA = E.M.comps.filter((c) => c.ed_source !== "Daymet").length;
+  for (const c of E.M.comps) {
+    const dm = c.ed_source === "Daymet", col = dm ? css("--ed") : css("--e5");
+    const t = { x: off, y: c.scan_r_dd, type: "scatter", mode: "lines", line: { color: col, width: dm ? 2.4 : 1.2, dash: dm ? dash[nd++ % 3] : "solid" }, opacity: dm ? 1 : 0.7,
+      hovertemplate: `${c.label}<br>s = %{x} h: r(Δday) %{y:.3f}<extra></extra>` };
+    if (dm) t.name = `${c.label} (Daymet), best ${c.scan_best} h`;
+    else { t.name = `${nERA} ERA5-sourced fields, best 0 h`; t.legendgroup = "era5"; t.showlegend = ne++ === 0; }
+    tr.push(t);
+    const bi = off.indexOf(c.scan_best);
+    tr.push({ x: [c.scan_best], y: [c.scan_r_dd[bi]], type: "scatter", mode: "markers", marker: { size: 8, color: col, line: { color: css("--panel"), width: 1.5 } }, hoverinfo: "skip", showlegend: false, legendgroup: dm ? undefined : "era5" });
+  }
+  draw("e5Scan", tr, base({ showlegend: true, legend: { orientation: "v", x: 1.01, y: 1, font: { size: 11 } }, margin: { l: 52, r: 8, t: 8, b: 40 },
+    xaxis: { title: { text: "window start s (hours from 00 UTC of the labelled day)" }, dtick: 3, zeroline: true },
+    yaxis: { title: { text: "r of day-to-day changes" } },
+    shapes: [{ type: "line", x0: 0, x1: 0, yref: "paper", y0: 0, y1: 1, line: { color: css("--ink-3"), width: 1, dash: "dot" } }] }));
+}
+
+function e5Prov() {
+  const a = E.M.annual_check; if (!a) return;
+  const w = (k) => ecomp(k).windows.dm, g5 = E.M.grid_e5, gd = E.M.grid_ed, A = E.M.arrays.ann_ed;
+  const reg = a.regions.map((r) => `${r.name} ${r.ed_max.toLocaleString("en-US")} vs ${r.e5_max.toLocaleString("en-US")} mm`).join("; ");
+  $("e5ProvCard").innerHTML = `<article class="finding"><span class="pill warn"><i></i>Check provenance</span><h2>The Daymet-labelled fields track ERA5 almost exactly</h2>
+    <p>Hourly ERA5 0.25° summed or maxed over a 24 h window starting ${w("tmax").offset} to ${w("prcp").offset} h from 00 UTC reproduces them: r(Δday) per cell <b>${fmt(w("tmax").cell_median_r_dd, 2)}</b> (tmax), <b>${fmt(w("tmin").cell_median_r_dd, 2)}</b> (tmin), <b>${fmt(w("prcp").cell_median_r_dd, 2)}</b> (precipitation), RMSE ${fmt(w("tmax").rmse, 2)} °C, ${fmt(w("tmin").rmse, 2)} °C and ${fmt(w("prcp").rmse, 2)} mm/day.
+    ${a.year} precipitation over CONUS land is <b>${fmt(a.ed_mean, 0)} mm</b> in ERA5-DAYMET vs <b>${fmt(a.e5_mean, 0)} mm</b> from ERA5, spatial r <b>${fmt(a.spatial_r, 3)}</b>, with the same mountain maxima (${reg}).</p>
+    <p>A station-based product does not usually agree with a reanalysis this closely. These fields look like time-shifted ERA5 on a 10′ grid rather than independent Daymet observations. Confirm their source before treating them as observations.</p></article>`;
+  const cs = { scale: precipScale(), zmin: 0, zmax: A.hi }, mask = earr("mask_ed");
+  draw("e5AnnA", [heat(g5, toZ(earr("ann_e5"), g5), cs, "mm"), outline()], e5Map());
+  draw("e5AnnB", [heat(gd, toZ(earr("ann_ed"), gd, mask), cs, "mm"), outline()], e5Map());
+  $("e5AnnSubA").textContent = `${a.year}, ${a.days} days, window from ${a.offset} h. Full 0.25° domain.`;
+  $("e5AnnSubB").textContent = `Same ${a.days} days of ${a.year}, CONUS land cells. Same colour scale.`;
+}
+
+function renderE5() {
+  if (!E.M) {
+    e5Load().then(() => { $("e5Loading").hidden = true; $("e5Body").hidden = false; if (S.tab === "era5us") { renderE5(); window.dispatchEvent(new Event("resize")); } })
+      .catch((e) => { $("e5Loading").textContent = "Could not load data/era5us.json. " + e; });
+    return;
+  }
+  e5Static(); e5Hour(); e5Day(); e5Pt(); e5Table(); e5Cell(); e5Ser(); e5Scan(); e5Prov();
+}
+
 /* ---------------------------------------------------------------- shell */
-const RENDER = { findings: renderFindings, compare: renderCompare, leap: renderLeap, boundary: renderBoundary, corr: renderCorr, lag: renderLag, datasets: () => {} };
+const RENDER = { findings: renderFindings, compare: renderCompare, leap: renderLeap, boundary: renderBoundary, corr: renderCorr, lag: renderLag, era5us: renderE5, datasets: () => {} };
 function render() { try { RENDER[S.tab](); } catch (e) { console.error(e); } }
 function showTab(t) {
   S.tab = t;
   document.querySelectorAll("#tabs button").forEach((b) => b.setAttribute("aria-selected", b.dataset.tab === t ? "true" : "false"));
   document.querySelectorAll("section.tab").forEach((s) => s.hidden = s.id !== "tab-" + t);
-  try { if (/^[a-z]+$/.test(t)) history.replaceState(null, "", "#" + t); } catch (e) {}
+  try { if (/^[a-z0-9]+$/.test(t)) history.replaceState(null, "", "#" + t); } catch (e) {}
   render();
   window.dispatchEvent(new Event("resize"));
 }
