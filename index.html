@@ -3,8 +3,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <style>[hidden]{display:none!important}</style>
 <meta charset="utf-8">
-<title>CAMELSH × ERA5-DAYMET Audit</title>
-<meta name="description" content="Cross-dataset consistency, leap-year alignment and hydrologic lag audit of the CAMELSH point cloud vs ERA5-DAYMET">
+<title>HydroORBIT Data Audit</title>
+<meta name="description" content="Cross-dataset consistency, calendar and day-boundary alignment, and hydrologic lag audit of the CAMELSH point cloud, ERA5-DAYMET and hourly ERA5 0.25°">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:wght@400;500;600;700;800&display=swap">
@@ -142,37 +142,101 @@ table.data.ov tbody th{color:var(--ink-3);font-weight:600;white-space:nowrap;ver
 table.data.ov thead th .chip.res{margin-left:6px}
 .notes-grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(min(100%,380px),1fr))}
 .notes-grid .finding h2{font-size:14px}
+/* two-level navigation: comparison group, then page */
+nav.groups{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-block:0 6px}
+nav.groups button{font:600 12px var(--sans);color:var(--ink-2);background:var(--panel);border:1px solid var(--rule);border-radius:999px;padding:4px 11px 4px 9px;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+nav.groups button .sws{display:inline-flex;gap:2px}
+nav.groups button[aria-current="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+nav.groups button:hover{border-color:var(--rule-strong);color:var(--ink)}
+nav.groups button[aria-current="true"]:hover{color:var(--bg)}
+.pagehead{padding-top:16px}
+.pagehead h2{font-size:16px;font-weight:800;margin:0;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 0;text-wrap:balance}
+.pagehead h2 .f{white-space:normal}
+.pagehead h2 .f+.f::before{content:"·";color:var(--ink-3);font-weight:400;margin:0 8px}
+.pagehead h2 .f.ab{color:var(--ink)}
+.pagehead h2 .f.v{font-weight:600;color:var(--ink-2)}
+.pagehead h2 .f.sc,.pagehead h2 .f.db{font-weight:500;font-size:13px;color:var(--ink-2)}
+.pagehead .gnote{font-size:12px;color:var(--ink-3);margin:4px 0 0;max-width:120ch}
+.pagehead .gnote b{color:var(--ink-2);font-weight:600}
+.pagehead .gnote code{font-family:var(--mono);font-size:.92em;background:var(--sunk);padding:0 4px;border-radius:3px}
+section.tab{padding-top:14px}
+.cal.c9{grid-template-columns:170px repeat(9,minmax(72px,1fr));min-width:820px}
+.cal .na{color:var(--ink-3)}
+.cal .ok{color:var(--good);font-weight:600}
+/* overlay explorer */
+.ov-top{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:end;margin-bottom:12px}
+.ov-top input[type=date]{font:13px var(--sans);color:var(--ink);background:var(--panel);border:1px solid var(--rule-strong);border-radius:5px;padding:4px 6px}
+.ov-grid{display:grid;gap:16px;grid-template-columns:minmax(0,1.6fr) minmax(300px,1fr)}
+@media (max-width:980px){.ov-grid{grid-template-columns:minmax(0,1fr)}}
+.ov-map{height:min(62vh,560px);min-height:320px}
+.ov-time{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin-top:6px}
+.ov-time input[type=range]{flex:1 1 220px;min-width:160px;height:28px;margin:0}
+.ov-time .mono{min-width:15ch;color:var(--ink)}
+.ov-time select{padding:3px 6px}
+.ov-strip{display:block;width:100%;height:0;margin-top:4px}
+.ov-status{font-size:12px;color:var(--ink-3);margin:6px 0 0;min-height:1.5em}
+.ov-status .nd{color:var(--crit)}
+.ov-layers{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.ovl{border:1px solid var(--rule);border-radius:6px;padding:8px 9px 7px;background:var(--panel)}
+.ovl.off{opacity:.62}
+.ovl.dis{background:var(--sunk)}
+.ovl-top{display:flex;align-items:flex-start;gap:7px}
+.ovl-top input[type=checkbox]{margin:3px 0 0;accent-color:var(--ink)}
+.ovl-name{flex:1;min-width:0;font-size:12.5px;line-height:1.35;color:var(--ink)}
+.ovl-name b{font-weight:700}
+.ovl-name small{display:block;color:var(--ink-3);font-size:11px}
+.ovl-btns{display:flex;gap:2px}
+.ovl-btns button{font:600 11px var(--sans);width:24px;height:22px;padding:0;background:var(--panel);color:var(--ink-2);border:1px solid var(--rule);border-radius:4px;cursor:pointer}
+.ovl-btns button:disabled{opacity:.35;cursor:default}
+.ovl-bot{display:flex;align-items:center;gap:10px;margin-top:6px;padding-left:20px}
+.ovl-bot input[type=range]{width:74px;flex:0 0 74px;accent-color:var(--ink-2)}
+.ovl-bot .op{font:11px var(--mono);color:var(--ink-3);width:4ch}
+.ovl .badge{font:600 10px/1 var(--mono);padding:3px 5px;border-radius:3px;border:1px solid var(--crit);color:var(--crit);white-space:nowrap;align-self:center}
+.ovl .badge.muted{border-color:var(--rule-strong);color:var(--ink-3)}
+.ovl-diff{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;margin-top:5px;padding-left:20px;font-size:12px;color:var(--ink-3)}
+.ovl-diff select{font-size:12px;padding:2px 4px;max-width:100%}
+.cbar{flex:1;min-width:120px;position:relative;height:30px}
+.cbar .g{height:9px;border-radius:2px;border:1px solid var(--rule)}
+.cbar .t{position:absolute;top:12px;font:10.5px var(--mono);color:var(--ink-2);transform:translateX(-50%);white-space:nowrap}
+.cbar .t:first-of-type{transform:none}.cbar .t.last{transform:translateX(-100%)}
+.cbar .u{position:absolute;right:0;top:-13px;font:10px var(--sans);color:var(--ink-3)}
+.ov-add{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.ov-add select{flex:1 1 180px}
+.ov-add button,.ov-pop .x{font:600 12px var(--sans);background:var(--panel);color:var(--ink);border:1px solid var(--rule-strong);border-radius:5px;padding:5px 10px;cursor:pointer}
+.ov-pop{position:fixed;z-index:30;right:16px;bottom:16px;width:min(640px,calc(100vw - 32px));background:var(--panel);border:1px solid var(--rule-strong);border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,.18);padding:10px 12px 6px}
+.ov-pop .hd{display:flex;gap:10px;align-items:flex-start}
+.ov-pop .hd div{flex:1;min-width:0}
+.ov-pop .hd h3{margin:0;font-size:13px}
+.ov-pop .hd p{margin:1px 0 0;font-size:11.5px;color:var(--ink-3)}
+.ov-pop .plot{height:min(46vh,380px)}
+@media (max-width:640px){.ov-pop{left:0;right:0;bottom:0;width:100%;border-radius:10px 10px 0 0;padding-bottom:max(6px,env(safe-area-inset-bottom))}.ov-pop .plot{height:40vh}
+  .wrap{padding-inline:16px}header.top .chips,h1 small{display:none}h1{font-size:17px}.top-row{padding-block:10px 8px}nav.groups button{font-size:11.5px;padding:3px 9px 3px 7px}.ov-map{height:66vw;min-height:230px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 
 <header class="top">
   <div class="wrap">
     <div class="top-row">
-      <h1>CAMELSH × ERA5-DAYMET Audit<small>9,008 gauges · 1980–2021</small></h1>
+      <h1>HydroORBIT Data Audit<small>9,008 gauges · 1979–2025</small></h1>
       <div class="chips">
-        <span class="chip"><span class="sw pc"></span>Point cloud (CAMELSH hourly, NLDAS-2 forcing)</span>
+        <span class="chip"><span class="sw pc"></span>CAMELSH point cloud (hourly, NLDAS-2 forcing)</span>
         <span class="chip"><span class="sw ed"></span>ERA5-DAYMET (daily, 10′ grid)</span>
+        <span class="chip"><span class="sw e5"></span>ERA5 0.25° US (hourly)</span>
       </div>
       <div class="chip sel-chip" id="selChip">basin <b id="selId">—</b></div>
     </div>
-    <nav class="tabs" role="tablist" id="tabs">
-      <button role="tab" data-tab="findings" aria-selected="true">Findings</button>
-      <button role="tab" data-tab="compare" aria-selected="false">Compare variables</button>
-      <button role="tab" data-tab="leap" aria-selected="false">Leap years</button>
-      <button role="tab" data-tab="boundary" aria-selected="false">Day boundaries</button>
-      <button role="tab" data-tab="corr" aria-selected="false">Correlations</button>
-      <button role="tab" data-tab="lag" aria-selected="false">Rain → flow lag</button>
-      <button role="tab" data-tab="era5us" aria-selected="false">ERA5 0.25° US</button>
-      <button role="tab" data-tab="datasets" aria-selected="false">Datasets</button>
-    </nav>
+    <nav class="groups" id="groups" aria-label="Comparison groups"></nav>
+    <nav class="tabs" role="tablist" id="tabs" aria-label="Pages in this group"></nav>
   </div>
 </header>
 
 <main class="wrap">
   <div class="loading" id="loading">Loading audit data…</div>
+  <div class="pagehead" id="pageHead"><h2 id="pageTitle"></h2><p class="gnote" id="pageNote" hidden></p></div>
 
   <!-- ============================================================ FINDINGS -->
   <section class="tab" id="tab-findings" hidden>
+    <div class="ds-head" style="margin-top:0"><h2><span class="sw pc"></span> <span class="sw ed"></span> CAMELSH × ERA5-DAYMET</h2></div>
     <p class="lede">Both datasets were read at every gauge for 1980–2021 (15,341 days). ERA5-DAYMET values come from the nearest land cell of the 10′ grid (median distance <b id="fCellKm">–</b> km), so expect differences where a lumped basin average and a single cell disagree (large or mountainous basins). The cards below state what was checked and what to change in a data loader.</p>
     <div class="findings" id="findingCards"></div>
     <div class="grid g2" style="margin-top:16px">
@@ -188,6 +252,10 @@ table.data.ov thead th .chip.res{margin-left:6px}
         <div class="plot short" id="driftPlot"></div>
       </div>
     </div>
+    <div class="ds-head"><h2><span class="sw ed"></span> <span class="sw e5"></span> ERA5-DAYMET × ERA5 0.25°</h2><p class="sub">Hourly ERA5 0.25° aggregated over 24 h windows against ERA5-DAYMET's daily fields at every CONUS land cell, 1980–2020.</p></div>
+    <div class="findings" id="fCardsE5ed"><p class="note">Loading…</p></div>
+    <div class="ds-head"><h2><span class="sw pc"></span> <span class="sw e5"></span> CAMELSH × ERA5 0.25°</h2><p class="sub">Every CAMELSH gauge against the nearest ERA5 0.25° land cell, hourly and daily, 1980–2020.</p></div>
+    <div class="findings" id="fCardsCe5"><p class="note">Loading…</p></div>
   </section>
 
   <!-- ============================================================ COMPARE -->
@@ -392,6 +460,94 @@ table.data.ov thead th .chip.res{margin-left:6px}
     </div>
   </section>
 
+  <!-- ============================================================ CAMELSH × ERA5 0.25° : COMPARE -->
+  <section class="tab" id="tab-ce5" hidden>
+    <div class="loading" id="c5Loading">Loading CAMELSH × ERA5 0.25° data…</div>
+    <div id="c5Body" hidden>
+      <p class="lede" id="c5Lede"></p>
+      <div class="findings" id="c5Cards" style="grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr))"></div>
+      <div class="panel" style="margin-top:16px">
+        <h2>Agreement by variable</h2>
+        <p class="sub">Median over gauges, 1980–2020. Difference = CAMELSH − ERA5 0.25°. r on hourly or daily values; r(anom) after removing each gauge's seasonal (and, hourly, diurnal) cycle. Click a row to map it.</p>
+        <div class="scroll"><table class="data" id="c5Table"></table></div>
+      </div>
+      <div class="controls" style="margin-top:16px">
+        <div class="ctl"><label for="c5Var">Variable</label><select id="c5Var"></select></div>
+        <div class="ctl"><label>Time scale</label><div class="seg" id="c5Scale" role="group" aria-label="Time scale"></div></div>
+        <div class="ctl"><label for="c5Metric">Map colour</label><select id="c5Metric"></select></div>
+        <div class="ctl"><label for="c5Find">Find gauge</label><input type="search" id="c5Find" placeholder="01013500" autocomplete="off"></div>
+        <p class="note" style="margin:0 0 4px">Click a gauge on the map. Ringed gauges carry stored series.</p>
+      </div>
+      <div class="grid g-map">
+        <div class="panel"><h2 id="c5MapTitle">Map</h2><p class="sub" id="c5MapSub"></p><div class="plot tall" id="c5Map"></div><div class="plot xs" id="c5Hist"></div></div>
+        <div class="grid" style="align-content:start">
+          <div class="panel">
+            <div class="controls" style="margin-bottom:4px"><div style="margin-right:auto;min-width:0"><h2 id="c5TsTitle">Series</h2><p class="sub" id="c5TsSub" style="margin:0"></p></div>
+              <div class="ctl"><label for="c5Win">Window</label><select id="c5Win"></select></div></div>
+            <div class="plot" id="c5Ts"></div>
+          </div>
+          <div class="grid g2">
+            <div class="panel"><h3>CAMELSH vs ERA5 0.25°</h3><p class="sub" id="c5ScatSub">Values in the series window</p><div class="plot short" id="c5Scatter"></div></div>
+            <div class="panel"><h3>Monthly climatology</h3><p class="sub">1980–2020 mean of daily values</p><div class="plot short" id="c5Clim"></div></div>
+          </div>
+          <div class="grid g2">
+            <div class="panel"><h3>Annual mean difference at this gauge</h3><p class="sub">CAMELSH − ERA5 0.25°; grey band = network 10th–90th percentile</p><div class="plot short" id="c5Annual"></div></div>
+            <div class="panel"><h3>Mean diurnal cycle (UTC)</h3><p class="sub" id="c5DiurnSub"></p><div class="plot short" id="c5Diurnal"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="grid g2" style="margin-top:16px">
+        <div class="panel">
+          <div class="controls" style="margin-bottom:6px"><div style="margin-right:auto"><h2>Network-wide drift</h2><p class="sub" style="margin:0" id="c5DriftSub"></p></div><div class="seg" id="c5DriftM" role="group" aria-label="Drift metric"></div></div>
+          <div class="plot short" id="c5Drift"></div>
+        </div>
+        <div class="panel"><h2>Agreement vs drainage area</h2><p class="sub" id="c5AreaSub"></p><div class="plot short" id="c5Area"></div></div>
+      </div>
+      <p class="note" id="c5Gen"></p>
+    </div>
+  </section>
+
+  <!-- ============================================================ CAMELSH × ERA5 0.25° : TIMING & CALENDAR -->
+  <section class="tab" id="tab-ce5time" hidden>
+    <div class="loading" id="c5tLoading">Loading CAMELSH × ERA5 0.25° data…</div>
+    <div id="c5tBody" hidden>
+      <p class="lede" id="c5tLede"></p>
+      <div class="grid">
+        <div class="panel"><h2>Which years overlap</h2><p class="sub">Record of each dataset. The CAMELSH × ERA5 0.25° comparison uses the shaded years only.</p><div class="plot short" id="c5Cover"></div></div>
+        <div class="panel"><h2>Calendar edge cases</h2><p class="sub">What each dataset stores on the days where calendars or records differ. Hatched cells have no data; masked days are excluded from every statistic, never interpolated.</p><div class="scroll"><div class="cal c9" id="c5Cal"></div></div></div>
+      </div>
+      <div class="ds-head"><h2>Hourly lag scan</h2><p class="sub" id="c5LagLede"></p></div>
+      <div class="grid g2">
+        <div class="panel"><h2>Correlation vs lag</h2><p class="sub">Median over gauges of r between CAMELSH at hour t and ERA5 0.25° at hour t + L; band = interquartile range of the selected variable. Dots mark each variable's peak.</p>
+          <div class="ctl" style="margin-bottom:6px"><div class="seg" id="c5LagBand" role="group" aria-label="Band"></div></div>
+          <div class="plot tall" id="c5Lag"></div></div>
+        <div class="grid" style="align-content:start">
+          <div class="panel"><div class="controls" style="margin-bottom:4px"><h2 style="margin-right:auto">Best lag per gauge</h2><div class="ctl"><select id="c5LagVar" aria-label="Variable"></select></div></div><div class="plot" id="c5LagMap"></div><div class="plot xs" id="c5LagHist"></div></div>
+          <div class="panel"><h3 id="c5LagSelTitle">Selected gauge</h3><p class="sub">r(L) for every variable at this gauge, 1980–2020</p><div class="plot short" id="c5LagSel"></div></div>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:16px"><h2>Best lag by longitude</h2><p class="sub">Median of per-gauge best lag (hours) in 7.5° longitude bands. A local-time error would change with longitude; a fixed labelling convention would not.</p><div class="scroll"><table class="data" id="c5LagBands"></table></div></div>
+      <div class="ds-head"><h2>Mean diurnal cycle</h2><p class="sub">Median over the selected gauges of each gauge's mean value by UTC hour, 1980–2020 (hours where both datasets have data).</p><div class="ctl" style="margin-left:auto"><select id="c5Region" aria-label="Gauges"></select></div></div>
+      <div class="grid g3">
+        <div class="panel"><h3>2 m air temperature</h3><p class="sub">°C</p><div class="plot short" id="c5DiT2m"></div></div>
+        <div class="panel"><h3>10 m wind speed</h3><p class="sub">m s⁻¹</p><div class="plot short" id="c5DiWS"></div></div>
+        <div class="panel"><h3>Precipitation</h3><p class="sub" id="c5DiSub">mm h⁻¹</p><div class="plot short" id="c5DiP"></div></div>
+      </div>
+      <div class="ds-head"><h2>Leap years</h2><p class="sub">Both datasets carry real UTC dates, so a wrong leap-year calendar in either would show up as a one-day shift after Feb 29. Daily values (UTC day), correlation of day-to-day changes for temperature and of daily totals for precipitation, ERA5 0.25° shifted by the lag.</p></div>
+      <div class="controls"><div class="ctl"><label>Test variable</label><div class="seg" id="c5LeapVar" role="group" aria-label="Test variable"></div></div></div>
+      <div class="grid g2">
+        <div class="panel"><h2>Which day lag matches best?</h2><p class="sub">Median over years of the per-year median over gauges.</p><div class="plot" id="c5LeapLag"></div></div>
+        <div class="panel"><h2>Lag test, year by year</h2><p class="sub">r at lags −2…+2 days. Every row should peak at 0. ★ = leap year.</p><div class="plot" id="c5LeapHeat"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ OVERLAY EXPLORERS (one per group, built by ovInit) -->
+  <section class="tab ov-sec" id="tab-ov-ced" data-ov="ced" hidden></section>
+  <section class="tab ov-sec" id="tab-ov-e5ed" data-ov="e5ed" hidden></section>
+  <section class="tab ov-sec" id="tab-ov-ce5" data-ov="ce5" hidden></section>
+  <section class="tab ov-sec" id="tab-ov-pq" data-ov="pq" hidden></section>
+
   <!-- ============================================================ DATASETS -->
   <section class="tab" id="tab-datasets" hidden>
 <!-- DATASETS:BEGIN -->
@@ -493,6 +649,7 @@ function mapLayout(extra = {}) {
     xaxis: { range: [-125, -66.5], visible: false, fixedrange: false }, yaxis: { range: [24.3, 49.8], visible: false, scaleanchor: "x", scaleratio: 1.27 }, ...extra });
 }
 function colorSpec(vals, kind) {
+  if (kind === "lag") return { cmin: -3, cmax: 3, colorscale: [[0, css("--div-lo")], [0.33, css("--div-lo2")], [0.5, css("--ink-3")], [0.67, css("--div-hi2")], [1, css("--div-hi")]] };
   if (kind === "div") { const m = quantile(vals.map(Math.abs), 0.97) || 1; return { cmin: -m, cmax: m, colorscale: divScale() }; }
   if (kind === "ratio") { const lo = quantile(vals, 0.03), hi = quantile(vals, 0.97); const m = Math.max(Math.abs(Math.log(lo)), Math.abs(Math.log(hi))) || 0.1; return { cmin: Math.exp(-m), cmax: Math.exp(m), colorscale: divScale(), log: true }; }
   return { cmin: quantile(vals, 0.02), cmax: quantile(vals, 0.98), colorscale: seqScale() };
@@ -548,6 +705,7 @@ function renderFindings() {
   ];
   $("findingCards").innerHTML = cards.map((c) => `<article class="finding"><span class="pill ${c.st}"><i></i>${c.tag}</span><h2>${c.h}</h2><p>${c.p}</p></article>`).join("");
   $("fCellKm").textContent = fmt(quantile(B.cell_km, 0.5), 1);
+  renderFindingsMore();
   const cols = [["bias", "Diff"], ["rmse", "RMSE"], ["r", "r"], ["r_anom", "r(anom)"], ["sd_ratio", "Std ratio"]];
   $("pairTable").innerHTML = `<tr><th>Variable</th><th>ED source</th><th>Day window</th>${cols.map((c) => `<th>${c[1]}</th>`).join("")}</tr>` +
     M.pairs.map((p) => `<tr><td>${p.label} <span style="color:var(--ink-3)">${p.unit}</span></td><td>${p.ed_source}</td><td>${p.day}</td>${cols.map((c) => `<td>${fmt(p.summary[c[0]], 2)}</td>`).join("")}</tr>`).join("");
@@ -1094,14 +1252,921 @@ function renderE5() {
   e5Static(); e5Hour(); e5Day(); e5Pt(); e5Table(); e5Cell(); e5Ser(); e5Scan(); e5Prov();
 }
 
+/* ---------------------------------------------------------------- lazily loaded data packs (era5us.json array format) */
+function lazyPack(url) {
+  const P = { M: null, meta: null, BUF: {}, _m: null, _d: null };
+  P.loadMeta = () => P._m || (P._m = fetch(url).then((r) => { if (!r.ok) throw new Error(`${url}: HTTP ${r.status}`); return r.json(); }).then((m) => (P.meta = m)));
+  P.load = () => P._d || (P._d = (async () => {
+    const m = await P.loadMeta();
+    const files = [...new Set(Object.values(m.arrays).map((a) => a.file))];
+    await Promise.all(files.map(async (f) => {
+      const r = await fetch("data/" + f); if (!r.ok) throw new Error(`data/${f}: HTTP ${r.status}`);
+      const bin = atob((await r.text()).trim()), u = new Uint8Array(bin.length);
+      for (let k = 0; k < bin.length; k++) u[k] = bin.charCodeAt(k);
+      P.BUF[f] = u.buffer;
+    }));
+    P.M = m;
+  })());
+  P.has = (name) => !!(P.M && P.M.arrays[name]);
+  P.arr = (name) => {
+    const a = P.M.arrays[name]; if (!a) throw new Error("missing array " + name);
+    if (a._v) return a._v;
+    const n = a.shape.reduce((x, y) => x * y, 1), buf = P.BUF[a.file]; let out;
+    if (a.dtype === "f4") out = new Float32Array(buf, a.offset, n);
+    else if (a.dtype === "u1") out = new Uint8Array(buf, a.offset, n);
+    else if (a.dtype === "i2") { const q = new Int16Array(buf, a.offset, n); out = new Float32Array(n); for (let i = 0; i < n; i++) out[i] = q[i] === -32768 ? NaN : q[i] * a.scale; }
+    else { // q1: uint8 quantised over [lo, hi]; 255 = NaN
+      const q = new Uint8Array(buf, a.offset, n), sq = a.tf === "sqrt", lo = sq ? Math.sqrt(a.lo) : a.lo, w = ((sq ? Math.sqrt(a.hi) : a.hi) - lo) / 254;
+      out = new Float32Array(n);
+      for (let i = 0; i < n; i++) { if (q[i] === 255) { out[i] = NaN; continue; } const t = lo + q[i] * w; out[i] = sq ? t * t : t; }
+    }
+    a._v = out; return out;
+  };
+  P.row = (name, i) => { const s = P.M.arrays[name].shape, w = s.slice(1).reduce((x, y) => x * y, 1); return P.arr(name).subarray(i * w, (i + 1) * w); };
+  return P;
+}
+function segObj(id, list, obj, key, cb) {
+  const el = $(id);
+  el.innerHTML = list.map(([v, l]) => `<button type="button" data-v="${v}" aria-pressed="${String(obj[key]) === String(v)}">${l}</button>`).join("");
+  el.onclick = (e) => { const b = e.target.closest("button"); if (!b || b.disabled) return; obj[key] = b.dataset.v; el.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", x === b ? "true" : "false")); cb(); };
+}
+const cardsHTML = (cards) => cards.map((c) => `<article class="finding"><span class="pill ${c.st}"><i></i>${c.tag}</span><h2>${c.h}</h2><p>${c.p}</p>${c.link ? `<p><a href="#${c.link[0]}">${c.link[1]} →</a></p>` : ""}</article>`).join("");
+const sgn = (v, d = 0) => v == null ? "–" : (v > 0 ? "+" : v < 0 ? "−" : "") + fmt(Math.abs(v), d);
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const isLeapY = (y) => (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+
+/* ---------------------------------------------------------------- CAMELSH × ERA5 0.25° (lazy: data/camelsh_era5us.json + x*.b64.txt) */
+const C5 = lazyPack("data/camelsh_era5us.json");
+const CS = { var: "T2m", scale: "hourly", metric: "r_anom", win: "d", drift: "bias", lagVar: "P", lagBand: "P", leapVar: "T2m", region: "all", ready: false };
+const C5ROW = new Map();
+const C5_METRICS = [
+  ["bias", "Mean difference (CAMELSH − ERA5)", "div"], ["rmse", "RMSE", "seq"], ["r", "Correlation r", "seq"], ["r_anom", "Anomaly correlation", "seq"],
+  ["sd_ratio", "Std ratio (CAMELSH / ERA5)", "ratio"], ["ratio", "Mean ratio (CAMELSH / ERA5)", "ratio"], ["wet_pc", "Wet fraction, CAMELSH", "seq"],
+  ["wet_e5", "Wet fraction, ERA5 0.25°", "seq"], ["p99_pc", "99th percentile, CAMELSH", "seq"], ["p99_e5", "99th percentile, ERA5 0.25°", "seq"],
+  ["mean_pc", "Mean, CAMELSH", "seq"], ["mean_e5", "Mean, ERA5 0.25°", "seq"], ["lagbest", "Best hourly lag (h)", "lag"]];
+const c5v = (k) => C5.meta.vars.find((v) => v.key === k);
+const c5unit = (v, scale) => scale === "hourly" ? v.unit_hourly : v.unit_daily;
+const c5m = (key, scale, m) => { const n = m === "lagbest" ? `lagbest_${key}` : `m_${key}_${scale}_${m}`; return C5.has(n) ? C5.arr(n) : null; };
+const c5Col = () => ({ T2m: css("--pc"), PS: css("--ink-3"), U10: css("--alt"), V10: css("--ed"), WS: css("--ink"), P: css("--e5") });
+
+function c5Cards(m) {
+  const s = m.summary, L = m.lag, leapT = m.leap.vars.T2m;
+  const med = (a) => { const v = a.filter((x) => x != null).sort((p, q) => p - q); return v.length ? v[Math.floor(v.length / 2)] : null; };
+  const peak0 = leapT.filter((r) => { const v = r.r.map((x) => x == null ? -9 : x); return v.indexOf(Math.max(...v)) === 2; }).length;
+  const lm = (li) => med(leapT.filter((r) => r.leap && r.seg === "Mar1–Dec30").map((r) => r.r[li]));
+  const nLeap = m.period.leap_years.length;
+  const share = (k, l) => { const h = L[k].hist, n = h.reduce((a, b) => a + b, 0); return n ? h[m.lags.indexOf(l)] / n : null; };
+  const rAt = (k, l) => L[k].median[m.lags.indexOf(l)];
+  const one = (k, nm) => `${nm} <b>${sgn(L[k].peak)} h</b> (${fmt(100 * share(k, L[k].peak), 0)}% of gauges)`;
+  let pTxt = "";
+  if (L.P.peak === 0 && share("P", 1) > 0.15) pTxt += ` For precipitation, r at +1 h is almost as high as at 0 h (${fmt(rAt("P", 1), 3)} vs ${fmt(rAt("P", 0), 3)}; ${fmt(100 * share("P", 1), 0)}% of gauges peak at +1 h): no whole-hour label offset, but ERA5 rain tends to arrive slightly later.`;
+  else if (L.P.peak === 1) pTxt += " ERA5 stamps each hourly precipitation total with the hour it ends; CAMELSH matches the total ending one hour later, so it stamps the hour it starts.";
+  for (const [k, nm] of [["U10", "U"], ["V10", "V"]]) if (L[k].peak !== 0) pTxt += ` Wind ${nm} peaks at ${sgn(L[k].peak)} h: CAMELSH ${L[k].peak < 0 ? "runs about an hour behind" : "runs about an hour ahead of"} ERA5 (cause not verified).`;
+  return [
+    { st: "info", tag: "Different products", h: "CAMELSH weather is not ERA5", link: ["ce5", "Compare variables"],
+      p: `CAMELSH forcing is NLDAS-2 averaged over each basin. Against the nearest ERA5 0.25° land cell, hourly temperature anomalies correlate at <b>${fmt(s.T2m.hourly.r_anom)}</b> (median over ${m.n_gauges.toLocaleString("en-US")} gauges) and hourly precipitation at <b>${fmt(s.P.hourly.r)}</b> (daily ${fmt(s.P.daily.r)}). A copy of ERA5 would give 1.00 with no lag. Precipitation falls in ${fmt(100 * s.P.hourly.wet_pc, 0)}% of CAMELSH hours vs ${fmt(100 * s.P.hourly.wet_e5, 0)}% of ERA5 hours (&gt; 0.1 mm).` },
+    { st: L.P.peak === 0 && L.T2m.peak === 0 ? "ok" : "warn", tag: "Hour labels", link: ["ce5time", "Timing & calendar"],
+      h: L.P.peak === 0 && L.T2m.peak === 0 ? "UTC hour labels agree" : `Hours are ${Math.abs(L.P.peak || L.T2m.peak)} h apart`,
+      p: `Peak of r(L) = corr(CAMELSH[t], ERA5[t + L]) over 1980–2020: ${one("T2m", "temperature")}, ${one("PS", "surface pressure")}, ${one("U10", "U")}, ${one("V10", "V")}, ${one("P", "precipitation")}.${pTxt}` },
+    { st: peak0 === leapT.length ? "ok" : "warn", tag: "Calendar", h: "Leap years line up; Dec 31 masked in both", link: ["ce5time", "Timing & calendar"],
+      p: `Daily temperature changes match best at lag 0 in <b>${peak0} of ${leapT.length}</b> year-segments (Jan 1–Feb 28 and Mar 1–Dec 30 of ${m.years[0]}–${m.years[m.years.length - 1]}); leap-year Mar–Dec r ${fmt(lm(2))} at lag 0 vs ${fmt(lm(1))} / ${fmt(lm(3))} at ∓1 day. ERA5 0.25° has no Dec 31 in leap years and CAMELSH's is NaN, so ${nLeap} days are masked in both. ERA5 1979 and CAMELSH 2021–2025 lie outside the overlap.` },
+    ...(m.precip_step ? [{ st: m.precip_step.frac_pc_gt_1_2 > 0.5 ? "warn" : "info", tag: "Check hourly precipitation", h: `CAMELSH precipitation steps down at ${m.precip_step.hour + 1}:00 UTC`, link: ["ce5time", "Timing & calendar"],
+      p: `Mean CAMELSH precipitation in the hour labelled ${m.precip_step.hour}:00 UTC is <b>${fmt(m.precip_step.ratio_pc)}×</b> the next hour's (median over gauges; ERA5 0.25°: ${fmt(m.precip_step.ratio_e5)}×). At ${m.precip_step.n_largest_step_here.toLocaleString("en-US")} of ${m.precip_step.n.toLocaleString("en-US")} gauges this is the largest hour-to-hour change of the mean diurnal cycle. 12 UTC is the day boundary of the CPC daily gauge analysis that NLDAS-2 precipitation is scaled to, so this is likely an artefact of splitting daily totals into hours. Daily totals over 12–12 UTC are unaffected; hourly timing near 12 UTC is not reliable.` }] : []),
+    { st: "info", tag: "Systematic", h: "Level differences", link: ["ce5", "Compare variables"],
+      p: `Median CAMELSH − ERA5 0.25°: temperature <b>${sgn(s.T2m.daily.bias, 2)} °C</b>, surface pressure ${sgn(s.PS.daily.bias, 1)} hPa (basin-average vs cell elevation), wind speed ${sgn(s.WS.daily.bias, 2)} m s⁻¹ with CAMELSH winds more variable (hourly std ratio U ${fmt(s.U10.hourly.sd_ratio)}, V ${fmt(s.V10.hourly.sd_ratio)}), precipitation ratio <b>${fmt(s.P.daily.ratio)}</b>. Gauge-to-cell distance: median ${fmt(m.pairing.km_median, 1)} km, max ${fmt(m.pairing.km_max, 1)} km.` },
+  ];
+}
+
+function c5Ready() {
+  if (C5.M) return true;
+  const fail = (e) => { $("c5Loading").textContent = $("c5tLoading").textContent = "Could not load data/camelsh_era5us.json. " + e; };
+  C5.load().then(() => {
+    c5Init(); ["c5Loading", "c5tLoading"].forEach((id) => $(id).hidden = true); ["c5Body", "c5tBody"].forEach((id) => $(id).hidden = false);
+    if (S.tab === "ce5" || S.tab === "ce5time") { render(); window.dispatchEvent(new Event("resize")); }
+  }).catch(fail);
+  return false;
+}
+
+function c5Init() {
+  if (CS.ready) return; CS.ready = true;
+  const m = C5.M;
+  m.sample.forEach((g, k) => C5ROW.set(g, k));
+  opts("c5Var", m.vars.map((v) => [v.key, v.label]), CS.var);
+  const metricOpts = () => {
+    const ok = C5_METRICS.filter((x) => c5m(CS.var, CS.scale, x[0]));
+    opts("c5Metric", ok.map((x) => [x[0], x[1] + (x[0] === "lagbest" ? "" : "")]), CS.metric);
+    if (!ok.find((x) => x[0] === CS.metric)) { CS.metric = "r_anom"; $("c5Metric").value = CS.metric; }
+  };
+  metricOpts();
+  $("c5Var").onchange = (e) => { CS.var = e.target.value; metricOpts(); render(); };
+  segObj("c5Scale", [["hourly", "Hourly"], ["daily", "Daily (UTC day)"]], CS, "scale", () => { metricOpts(); render(); });
+  $("c5Metric").onchange = (e) => { CS.metric = e.target.value; render(); };
+  $("c5Find").onchange = (e) => { const k = B.id.indexOf(e.target.value.trim()); if (k >= 0) select(k); else e.target.setCustomValidity("No gauge with that ID"), e.target.reportValidity(); };
+  $("c5Find").oninput = (e) => e.target.setCustomValidity("");
+  const ser = m.series;
+  opts("c5Win", [["d", `Daily, ${ser.daily_start.slice(0, 4)}–${new Date(Date.parse(ser.daily_start) + (ser.n_days - 1) * DAYMS).getUTCFullYear()}`]].concat(ser.hourly.map((h) => [h.key, `Hourly, ${h.label}`])), CS.win);
+  $("c5Win").onchange = (e) => { CS.win = e.target.value; c5Series(); };
+  segObj("c5DriftM", [["bias", "Mean difference"], ["r_anom", "r (anomalies)"]], CS, "drift", c5Drift);
+  $("c5Table").onclick = (e) => { const r = e.target.closest("tr[data-k]"); if (!r) return; CS.var = r.dataset.k; CS.scale = r.dataset.s; $("c5Var").value = CS.var;
+    $("c5Scale").querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.v === CS.scale ? "true" : "false")); metricOpts(); render(); };
+  const P = m.pairing, y0 = m.years[0], y1 = m.years[m.years.length - 1];
+  $("c5Lede").innerHTML = `Every CAMELSH gauge against hourly <b>ERA5 0.25°</b>, ${y0}–${y1} (${m.years.length} years, the years both datasets cover). <b>Pairing:</b> each gauge outlet with the <b>nearest ERA5 0.25° cell centre that is land</b> (land_sea_mask ≥ 0.5): ${P.n_cells.toLocaleString("en-US")} cells for ${m.n_gauges.toLocaleString("en-US")} gauges, median ${fmt(P.km_median, 1)} km away. There is no basin-area weighting: CAMELSH forcing is a basin average, so large basins compare an area mean with one ~28 km cell. <b>Calendar:</b> both use UTC hour labels on one continuous axis; Dec 31 of the ${m.period.leap_years.length} leap years is absent in ERA5 0.25° and NaN in CAMELSH, and is masked in both (never interpolated). Daily values are complete UTC days. Variables are the ones both datasets store: 2 m temperature, surface pressure, 10 m wind (U, V, speed) and precipitation. Not compared: ${m.not_compared.map((x) => `<code>${x.field}</code>`).join(", ")} (no matching ERA5 0.25° field; ERA5 humidity exists on pressure levels only).`;
+  $("c5Cards").innerHTML = cardsHTML(c5Cards(m).map((c) => ({ ...c, link: c.link && c.link[0] === "ce5" ? null : c.link })));
+  $("c5Gen").innerHTML = `Generated ${m.generated} by <code>hydroviz/camelsh_era5us_viz.py</code> (<code>run_camelsh_era5us_viz.slurm</code>). Hourly ERA5 at the gauge cells is kept in <code>e5g_&lt;field&gt;.npy</code> under the scratch directory for reuse. ${m.climatology_note}.`;
+  c5Table();
+  // timing page controls
+  opts("c5LagVar", m.vars.map((v) => [v.key, v.label]), CS.lagVar);
+  $("c5LagVar").onchange = (e) => { CS.lagVar = e.target.value; c5LagMap(); };
+  segObj("c5LagBand", m.vars.map((v) => [v.key, v.key === "T2m" ? "T" : v.key]), CS, "lagBand", c5Lag);
+  opts("c5Region", [["all", `All gauges (${NB.toLocaleString("en-US")})`]].concat(M.corr_groups.filter((g) => g.key !== "all").map((g) => [g.key, `${g.label} (${g.n})`])), CS.region);
+  $("c5Region").onchange = (e) => { CS.region = e.target.value; c5Diurnal(); };
+  segObj("c5LeapVar", [["T2m", "Temperature (Δday)"], ["P", "Precipitation"]], CS, "leapVar", c5Leap);
+  $("c5tLede").innerHTML = `How the two hourly records line up in time. ERA5 0.25° stores <b>${m.coverage.era5[0]}–${m.coverage.era5[1]}</b> (8,760 h every year, so leap years end on Dec 30 23:00 UTC), CAMELSH <b>${m.coverage.camelsh[0]}–${m.coverage.camelsh[1]}</b> (continuous; weather and streamflow NaN on Dec 31 of leap years) and ERA5-DAYMET <b>${m.coverage.era5daymet[0]}–${m.coverage.era5daymet[1]}</b>. This comparison uses <b>${y0}–${y1}</b>, with the last day 2020-12-30.`;
+  $("c5LagLede").innerHTML = `If CAMELSH weather were ERA5 with shifted timestamps, r(L) would reach ~1 at the shift. Signals: first differences (Δ1 h) for temperature, pressure and wind, so the slow seasonal cycle does not dominate; square root of hourly totals for precipitation. L &gt; 0 means CAMELSH at hour t matches ERA5 at hour t + L.`;
+}
+
+function c5Table() {
+  const m = C5.M, cols = [["bias", "Diff", 2], ["rmse", "RMSE", 2], ["r", "r", 3], ["r_anom", "r(anom)", 3], ["sd_ratio", "Std ratio", 2], ["ratio", "Mean ratio", 2], ["wet_pc", "Wet % CAMELSH", -1], ["wet_e5", "Wet % ERA5", -1]];
+  const rows = [];
+  for (const v of m.vars) for (const scale of ["hourly", "daily"]) {
+    const s = m.summary[v.key][scale], on = v.key === CS.var && scale === CS.scale;
+    rows.push(`<tr class="clickable${on ? " on" : ""}" data-k="${v.key}" data-s="${scale}"><td>${scale === "hourly" ? v.label : ""} <span style="color:var(--ink-3)">${c5unit(v, scale)}</span></td><td style="text-align:left">${scale === "hourly" ? "Hourly" : "Daily (UTC)"}</td>` +
+      cols.map(([k, , d]) => `<td>${s[k] == null ? "" : d < 0 ? fmt(100 * s[k], 1) : fmt(s[k], d)}</td>`).join("") +
+      `<td>${scale === "hourly" ? sgn(m.lag[v.key].peak) + " h" : ""}</td></tr>`);
+  }
+  $("c5Table").innerHTML = `<tr><th>Variable</th><th style="text-align:left">Scale</th>${cols.map((c) => `<th>${c[1]}</th>`).join("")}<th title="Peak of the hourly lag scan">Best lag</th></tr>` + rows.join("");
+}
+
+function renderC5() {
+  if (!c5Ready()) return;
+  const m = C5.M, v = c5v(CS.var), mdef = C5_METRICS.find((x) => x[0] === CS.metric);
+  const vals = c5m(CS.var, CS.scale, CS.metric);
+  const unit = ["bias", "rmse", "mean_pc", "mean_e5", "p99_pc", "p99_e5"].includes(CS.metric) ? c5unit(v, CS.scale) : CS.metric === "lagbest" ? "h" : "";
+  document.querySelectorAll("#c5Table tr[data-k]").forEach((r) => r.classList.toggle("on", r.dataset.k === CS.var && r.dataset.s === CS.scale));
+  $("c5MapTitle").textContent = `${v.label}, ${CS.metric === "lagbest" ? "hourly" : CS.scale}: ${mdef[1].toLowerCase()}`;
+  $("c5MapSub").textContent = CS.metric === "lagbest" ? `Lag L (hours) maximising corr(CAMELSH[t], ERA5[t + L]) of the ${v.lag_signal}, 1980–2020.`
+    : `CAMELSH basin average vs the nearest ERA5 0.25° land cell, ${CS.scale === "hourly" ? "every hour" : "UTC days"}, ${m.years[0]}–${m.years[m.years.length - 1]}. Median ${fmt(quantile(vals, 0.5), 3)} ${unit}.`;
+  draw("c5Map", [landTrace(), pointsTrace(vals, mdef[2], unit, mdef[1]), sampleRing(), selTrace()], mapLayout());
+  bindMapClick("c5Map");
+  const fin = Array.from(vals).filter(isFinite), lo = quantile(fin, 0.005), hi = quantile(fin, 0.995);
+  draw("c5Hist", [{ type: "histogram", x: fin.filter((x) => x >= lo && x <= hi), nbinsx: CS.metric === "lagbest" ? 49 : 60, marker: { color: css("--ink-3"), line: { color: css("--panel"), width: 1 } }, hovertemplate: "%{x}: %{y} gauges<extra></extra>" },
+    { type: "scatter", mode: "lines", x: [vals[S.sel], vals[S.sel]], y: [0, 1], yaxis: "y2", line: { color: css("--ink"), width: 2 }, hoverinfo: "skip" }],
+    base({ margin: { l: 40, r: 12, t: 4, b: 28 }, bargap: 0, yaxis: { title: { text: "gauges" } }, yaxis2: { overlaying: "y", range: [0, 1], visible: false }, xaxis: { title: { text: `${mdef[1]} ${unit}` } } }));
+  c5Series(); c5Gauge(); c5Drift(); c5Area();
+}
+
+function c5Series() {
+  const m = C5.M, v = c5v(CS.var), i = S.sel, si = C5ROW.get(i), hourly = CS.win !== "d";
+  const w = hourly ? m.series.hourly.find((h) => h.key === CS.win) : null, unit = hourly ? v.unit_hourly : v.unit_daily;
+  $("c5TsTitle").textContent = `${v.label} at ${B.id[i]}`;
+  $("c5TsSub").textContent = `${unit} · ${fmt(B.area[i], 0)} km² · ERA5 cell ${fmt(C5.arr("cell_km")[i], 1)} km from gauge · ${si == null ? "no stored series for this gauge" : hourly ? "hourly, UTC labels as stored" : "UTC-day " + (v.daily === "sum" ? "totals" : "means")}`;
+  if (si == null) {
+    ["c5Ts", "c5Scatter"].forEach((id) => Plotly.purge($(id)));
+    $("c5Ts").innerHTML = `<div class="empty">Series are stored for the ${m.sample.length} ringed gauges. Metrics, climatology, annual differences and diurnal cycles cover every gauge.</div>`;
+    $("c5Scatter").innerHTML = `<div class="empty">Pick a ringed gauge</div>`; return;
+  }
+  const pre = hourly ? `ser_${w.key}_${v.key}` : `ser_d_${v.key}`, a = C5.row(pre + "_pc", si), b = C5.row(pre + "_e5", si);
+  const t0 = hourly ? Date.parse(w.start + ":00Z") : Date.parse(m.series.daily_start), st = hourly ? 36e5 : DAYMS;
+  const x = Array.from({ length: a.length }, (_, k) => { const s = new Date(t0 + k * st).toISOString(); return hourly ? s.slice(0, 13) + ":00" : s.slice(0, 10); });
+  const shapes = [], ann = [];
+  const mark = (d0, d1, col, text) => { shapes.push({ type: "rect", xref: "x", yref: "paper", x0: d0, x1: d1, y0: 0, y1: 1, fillcolor: col, opacity: 0.12, line: { width: 0 } }); ann.push({ x: d0, y: 1, yref: "paper", text, showarrow: false, yanchor: "bottom", xanchor: "left", font: { size: 10, color: css("--ink-3") } }); };
+  if (x[0] <= "2020-02-29" && x[x.length - 1] >= "2020-02-29") mark("2020-02-29", "2020-03-01", css("--pc"), "Feb 29");
+  if (hourly && x[x.length - 1] >= "2020-12-31") mark("2020-12-31", "2021-01-01", css("--crit"), "Dec 31: no data in either");
+  const isP = v.key === "P";
+  draw("c5Ts", [
+    { x, y: toNull(a), type: hourly ? "scattergl" : "scatter", mode: "lines", name: "CAMELSH", line: { color: css("--pc"), width: isP ? 1.2 : 1.5, shape: isP && hourly ? "hv" : "linear" } },
+    { x, y: toNull(b), type: hourly ? "scattergl" : "scatter", mode: "lines", name: "ERA5 0.25°", line: { color: css("--e5"), width: isP ? 1.2 : 1.5, shape: isP && hourly ? "hv" : "linear" } }],
+    base({ hovermode: "x unified", showlegend: true, yaxis: { title: { text: unit } }, xaxis: { type: "date" }, shapes, annotations: ann }));
+  const xs = [], ys = []; for (let k = 0; k < a.length; k++) if (isFinite(a[k]) && isFinite(b[k])) { xs.push(b[k]); ys.push(a[k]); }
+  const mn = Math.min(...xs, ...ys), mx = Math.max(...xs, ...ys);
+  $("c5ScatSub").textContent = `${hourly ? "Hourly" : "Daily"} values in the series window (${xs.length.toLocaleString("en-US")} pairs)`;
+  draw("c5Scatter", [{ x: xs, y: ys, type: "scattergl", mode: "markers", marker: { size: 3.5, color: css("--pc"), opacity: 0.4 }, hovertemplate: "ERA5 %{x:.2f}<br>CAMELSH %{y:.2f}<extra></extra>" },
+    { x: [mn, mx], y: [mn, mx], mode: "lines", line: { color: css("--ink-3"), dash: "dot", width: 1 }, hoverinfo: "skip" }],
+    base({ xaxis: { title: { text: `ERA5 0.25° (${unit})` } }, yaxis: { title: { text: `CAMELSH (${unit})` } } }));
+}
+
+function c5Gauge() {
+  const m = C5.M, v = c5v(CS.var), i = S.sel, ud = v.unit_daily;
+  const cl = C5.row("clim_" + v.key, i);
+  draw("c5Clim", [
+    { x: MONTHS, y: toNull(cl.subarray(0, 12)), name: "CAMELSH", type: "scatter", mode: "lines+markers", line: { color: css("--pc"), width: 2 }, marker: { size: 7 } },
+    { x: MONTHS, y: toNull(cl.subarray(12, 24)), name: "ERA5 0.25°", type: "scatter", mode: "lines+markers", line: { color: css("--e5"), width: 2 }, marker: { size: 7 } }],
+    base({ hovermode: "x unified", showlegend: true, yaxis: { title: { text: ud } } }));
+  const yrs = m.years, ab = C5.row("annual_bias_" + v.key, i), band = m.annual[v.key].bias;
+  draw("c5Annual", [
+    { x: yrs.concat(yrs.slice().reverse()), y: toNull(band.q90).concat(toNull(band.q10).reverse()), fill: "toself", fillcolor: css("--sunk"), line: { width: 0 }, hoverinfo: "skip", type: "scatter" },
+    { x: yrs, y: toNull(ab), type: "scatter", mode: "lines+markers", line: { color: css("--ink"), width: 1.5 }, marker: { size: 7, color: Array.from(ab, (x) => x >= 0 ? css("--div-hi") : css("--div-lo")), line: { color: css("--panel"), width: 1.2 } }, hovertemplate: `%{x}: %{y:.3f} ${ud}<extra></extra>` }],
+    base({ yaxis: { title: { text: `CAMELSH − ERA5 (${ud})` } }, xaxis: { dtick: 5 } }));
+  if (C5.has("diurnal_" + v.key)) {
+    const d = C5.row("diurnal_" + v.key, i), hrs = Array.from({ length: 24 }, (_, h) => h);
+    const pk = (o) => { let b = 0; for (let h = 1; h < 24; h++) if (d[o + h] > d[o + b]) b = h; return b; };
+    $("c5DiurnSub").textContent = `Mean by UTC hour, 1980–2020, ${v.unit_hourly}. Peak at ${pk(0)}:00 (CAMELSH) and ${pk(24)}:00 UTC (ERA5).`;
+    draw("c5Diurnal", [
+      { x: hrs, y: toNull(d.subarray(0, 24)), name: "CAMELSH", type: "scatter", mode: "lines+markers", line: { color: css("--pc"), width: 2 }, marker: { size: 5 } },
+      { x: hrs, y: toNull(d.subarray(24, 48)), name: "ERA5 0.25°", type: "scatter", mode: "lines+markers", line: { color: css("--e5"), width: 2 }, marker: { size: 5 } }],
+      base({ hovermode: "x unified", showlegend: true, xaxis: { title: { text: "hour (UTC)" }, dtick: 3 }, yaxis: { title: { text: v.unit_hourly } } }));
+  } else {
+    Plotly.purge($("c5Diurnal")); $("c5DiurnSub").textContent = "";
+    $("c5Diurnal").innerHTML = `<div class="empty">Diurnal cycles are stored for temperature, wind speed and precipitation.</div>`;
+  }
+}
+
+function c5Drift() {
+  const m = C5.M, v = c5v(CS.var), a = m.annual[v.key][CS.drift], yrs = m.years, isB = CS.drift === "bias";
+  $("c5DriftSub").textContent = `${v.label}: median over gauges of the per-year ${isB ? "mean difference of daily values" : "r of daily anomalies"}; band = 10th–90th percentile. A step or trend means one product changed over time.`;
+  draw("c5Drift", [
+    { x: yrs.concat(yrs.slice().reverse()), y: toNull(a.q90).concat(toNull(a.q10).reverse()), fill: "toself", fillcolor: css("--sunk"), line: { width: 0 }, hoverinfo: "skip", type: "scatter" },
+    { x: yrs, y: toNull(a.median), type: "scatter", mode: "lines+markers", line: { color: css("--ink"), width: 2 }, marker: { size: 5 }, hovertemplate: `%{x}: %{y:.3f}${isB ? " " + v.unit_daily : ""}<extra></extra>` }],
+    base({ yaxis: { title: { text: isB ? `CAMELSH − ERA5 (${v.unit_daily})` : "r (daily anomalies)" }, zeroline: isB }, xaxis: { dtick: 5 } }));
+}
+
+function c5Area() {
+  const v = c5v(CS.var), mt = CS.metric === "lagbest" ? "r_anom" : CS.metric, y = c5m(CS.var, CS.scale, mt), area = B.area;
+  const mdef = C5_METRICS.find((x) => x[0] === mt), ix = [];
+  for (let i = 0; i < NB; i++) if (isFinite(y[i]) && area[i] > 0) ix.push(i);
+  $("c5AreaSub").textContent = `${v.label}, ${CS.scale}: ${mdef[1].toLowerCase()} per gauge against drainage area. A trend with area shows the basin-average vs single-cell mismatch.`;
+  draw("c5Area", [{ x: ix.map((i) => area[i]), y: ix.map((i) => y[i]), customdata: ix, text: ix.map((i) => B.id[i]), type: "scattergl", mode: "markers", marker: { size: 3.5, color: css("--pc"), opacity: 0.35 }, hovertemplate: "%{text}<br>%{x:.0f} km²: %{y:.3f}<extra></extra>" },
+    { x: [area[S.sel]], y: [y[S.sel]], type: "scatter", mode: "markers", marker: { size: 12, color: "rgba(0,0,0,0)", line: { width: 2.5, color: css("--ink") } }, hoverinfo: "skip" }],
+    base({ xaxis: { type: "log", title: { text: "drainage area (km²)" } }, yaxis: { title: { text: mdef[1] } } }));
+  bindMapClick("c5Area");
+}
+
+/* ---- timing & calendar page */
+function renderC5Time() {
+  if (!c5Ready()) return;
+  c5Cover(); c5Cal(); c5Lag(); c5LagMap(); c5LagBands(); c5Diurnal(); c5Leap();
+}
+function c5Cover() {
+  const m = C5.M, cv = m.coverage, rows = [["CAMELSH", cv.camelsh, "--pc"], ["ERA5 0.25° US", cv.era5, "--e5"], ["ERA5-DAYMET 10′", cv.era5daymet, "--ed"]];
+  draw("c5Cover", rows.map(([n, r, c]) => ({ type: "bar", orientation: "h", y: [n], x: [r[1] - r[0] + 1], base: [r[0]], marker: { color: css(c) }, width: 0.5, hovertemplate: `${n}: ${r[0]}–${r[1]}<extra></extra>` })),
+    base({ margin: { l: 110, r: 12, t: 22, b: 30 }, barmode: "overlay", xaxis: { range: [1977.5, 2027.5], dtick: 5, title: { text: "year" } }, yaxis: { autorange: "reversed" },
+      shapes: [{ type: "rect", xref: "x", yref: "paper", x0: cv.overlap[0], x1: cv.overlap[1] + 1, y0: 0, y1: 1, fillcolor: css("--ink"), opacity: 0.08, line: { width: 1, color: css("--ink-3"), dash: "dot" } }],
+      annotations: [{ x: (cv.overlap[0] + cv.overlap[1] + 1) / 2, y: 1, yref: "paper", yanchor: "bottom", text: `CAMELSH × ERA5 0.25°: ${cv.overlap[0]}–${cv.overlap[1]} (${cv.overlap[1] - cv.overlap[0] + 1} years)`, showarrow: false, font: { size: 11, color: css("--ink-2") } }] }));
+}
+function c5Cal() {
+  const cols = ["Dec 31, 1979", "Jan 1, 1980", "Feb 29 (leap)", "Mar 1 (leap)", "Dec 30 (leap)", "Dec 31 (leap)", "Jan 1 after a leap year", "Dec 30, 2020", "Jan 1, 2021"];
+  const R = [
+    ["CAMELSH weather", ["–", "24 h", "24 h", "24 h", "24 h", "NaN", "24 h", "24 h", "24 h"]],
+    ["ERA5 0.25° hours", ["24 h", "24 h", "24 h", "24 h", "24 h", "absent", "24 h", "24 h", "–"]],
+    ["ERA5-DAYMET step k", ["–", "0", "59", "60", "364", "absent", "0", "364", "0"]],
+    ["This comparison", ["outside", "used", "used", "used", "used", "masked", "used", "used (last day)", "outside"]]];
+  const cls = (t) => t === "NaN" || t === "absent" || t === "masked" ? "v miss gap" : t === "–" || t === "outside" ? "v na gap" : t.startsWith("used") ? "v ok" : "v";
+  $("c5Cal").innerHTML = `<div class="h">date</div>` + cols.map((c) => `<div class="h${c.startsWith("Feb 29") ? " feb29" : ""}">${c}</div>`).join("") +
+    R.map(([lab, cells]) => `<div class="lab">${lab}</div>` + cells.map((t) => `<div class="${cls(t)}">${t}</div>`).join("")).join("");
+}
+function c5Lag() {
+  const m = C5.M, lags = m.lags, col = c5Col(), tr = [];
+  const bv = m.lag[CS.lagBand];
+  tr.push({ x: lags.concat(lags.slice().reverse()), y: toNull(bv.q75).concat(toNull(bv.q25).reverse()), fill: "toself", fillcolor: col[CS.lagBand], opacity: 0.15, line: { width: 0 }, hoverinfo: "skip", type: "scatter", showlegend: false });
+  for (const v of m.vars) {
+    const L = m.lag[v.key], pi = lags.indexOf(L.peak);
+    tr.push({ x: lags, y: toNull(L.median), type: "scatter", mode: "lines", name: `${v.label} (peak ${sgn(L.peak)} h)`, line: { color: col[v.key], width: v.key === CS.lagBand ? 2.6 : 1.6 }, hovertemplate: `${v.label}<br>L = %{x} h: r %{y:.3f}<extra></extra>` });
+    tr.push({ x: [L.peak], y: [L.median[pi]], type: "scatter", mode: "markers", marker: { size: 9, color: col[v.key], line: { color: css("--panel"), width: 2 } }, hoverinfo: "skip", showlegend: false });
+  }
+  draw("c5Lag", tr, base({ showlegend: true, legend: { orientation: "h", y: -0.2, font: { size: 11, color: css("--ink-2") } }, margin: { l: 48, r: 12, t: 8, b: 96 },
+    xaxis: { title: { text: "L (hours): CAMELSH[t] vs ERA5[t + L]" }, dtick: 3, zeroline: true }, yaxis: { title: { text: "median r" } },
+    shapes: [{ type: "line", x0: 0, x1: 0, yref: "paper", y0: 0, y1: 1, line: { color: css("--ink-3"), width: 1, dash: "dot" } }] }));
+  c5LagSel();
+}
+function c5LagMap() {
+  const m = C5.M, k = CS.lagVar, vals = C5.arr("lagbest_" + k), L = m.lag[k];
+  draw("c5LagMap", [landTrace(), pointsTrace(vals, "lag", "h", "best lag"), selTrace()], mapLayout());
+  bindMapClick("c5LagMap");
+  draw("c5LagHist", [{ type: "bar", x: m.lags, y: L.hist, marker: { color: m.lags.map((l) => l === L.peak ? css("--ink") : css("--ink-3")) }, hovertemplate: "L = %{x} h: %{y} gauges<extra></extra>" }],
+    base({ margin: { l: 44, r: 12, t: 4, b: 28 }, bargap: 0.1, xaxis: { title: { text: `best lag (h), ${c5v(k).label}` }, dtick: 6 }, yaxis: { title: { text: "gauges" } } }));
+}
+function c5LagSel() {
+  const m = C5.M, i = S.sel, col = c5Col();
+  $("c5LagSelTitle").textContent = `Gauge ${B.id[i]} · ${fmt(B.area[i], 0)} km² · ERA5 cell ${fmt(C5.arr("cell_km")[i], 1)} km away`;
+  draw("c5LagSel", m.vars.map((v) => ({ x: m.lags, y: toNull(C5.row("lag_" + v.key, i)), type: "scatter", mode: "lines", name: v.key, line: { color: col[v.key], width: 1.8 }, hovertemplate: `${v.label}<br>L = %{x} h: r %{y:.2f}<extra></extra>` })),
+    base({ showlegend: true, hovermode: "x unified", xaxis: { title: { text: "L (hours)" }, dtick: 6, zeroline: true }, yaxis: { title: { text: "r" } } }));
+}
+function c5LagBands() {
+  const m = C5.M, e = m.lon_band_edges;
+  $("c5LagBands").innerHTML = `<tr><th>Longitude band</th>${m.vars.map((v) => `<th>${v.key}</th>`).join("")}</tr>` +
+    e.slice(0, -1).map((lo, b) => `<tr><td>${lo.toFixed(1)}° to ${e[b + 1].toFixed(1)}°</td>${m.vars.map((v) => { const x = m.lag[v.key].band_peaks[b]; return `<td>${x == null ? "–" : sgn(x)}</td>`; }).join("")}</tr>`).join("");
+}
+function c5Diurnal() {
+  const ps = C5.M.precip_step;
+  if (ps) $("c5DiSub").innerHTML = `CAMELSH precipitation drops from the hour labelled ${ps.hour}:00 to ${ps.hour + 1}:00 UTC (median ratio ${fmt(ps.ratio_pc)}; ERA5 ${fmt(ps.ratio_e5)}), the day boundary of the CPC gauge analysis behind NLDAS-2. ERA5 peaks in the late afternoon (21–22 UTC).`;
+  const sel = []; for (let i = 0; i < NB; i++) if (CS.region === "all" || B.part[i] === CS.region) sel.push(i);
+  const hrs = Array.from({ length: 24 }, (_, h) => h);
+  for (const [k, id, u] of [["T2m", "c5DiT2m", "°C"], ["WS", "c5DiWS", "m s⁻¹"], ["P", "c5DiP", "mm h⁻¹"]]) {
+    const a = C5.arr("diurnal_" + k), med = (o) => hrs.map((h) => { const v = []; for (const i of sel) { const x = a[i * 48 + o + h]; if (isFinite(x)) v.push(x); } v.sort((p, q) => p - q); return v.length ? v[Math.floor(v.length / 2)] : null; });
+    draw(id, [{ x: hrs, y: med(0), name: "CAMELSH", type: "scatter", mode: "lines+markers", line: { color: css("--pc"), width: 2 }, marker: { size: 5 } },
+      { x: hrs, y: med(24), name: "ERA5 0.25°", type: "scatter", mode: "lines+markers", line: { color: css("--e5"), width: 2 }, marker: { size: 5 } }],
+      base({ hovermode: "x unified", showlegend: true, xaxis: { title: { text: "hour (UTC)" }, dtick: 3 }, yaxis: { title: { text: u } } }));
+  }
+}
+function c5Leap() {
+  const m = C5.M, rowsAll = m.leap.vars[CS.leapVar], lags = m.leap.lags;
+  const groups = [["Non-leap years, Mar 1–Dec 30", (r) => !r.leap && r.seg === "Mar1–Dec30", css("--ink"), "dot"], ["Leap years, Jan 1–Feb 28", (r) => r.leap && r.seg === "Jan1–Feb28", css("--ed"), "dash"],
+    ["Leap years, Mar 1–Dec 30", (r) => r.leap && r.seg === "Mar1–Dec30", css("--pc"), "solid"]];
+  const medAt = (f, li) => { const a = rowsAll.filter(f).map((r) => r.r[li]).filter((x) => x != null).sort((p, q) => p - q); return a.length ? a[Math.floor(a.length / 2)] : null; };
+  draw("c5LeapLag", groups.map(([n, f, c, d]) => ({ x: lags, y: lags.map((_, li) => medAt(f, li)), type: "scatter", mode: "lines+markers", name: n, line: { color: c, width: 2, dash: d }, marker: { size: 7 }, hovertemplate: `${n}<br>lag %{x} d: r %{y:.3f}<extra></extra>` })),
+    base({ showlegend: true, hovermode: "x unified", legend: { orientation: "h", y: 1.16, font: { size: 11, color: css("--ink-2") } }, margin: { l: 48, r: 12, t: 30, b: 36 }, xaxis: { tickvals: lags, title: { text: "lag (days), ERA5 shifted" } }, yaxis: { title: { text: "median r" } } }));
+  const rows = rowsAll.filter((r) => r.seg === "Mar1–Dec30" || r.leap);
+  draw("c5LeapHeat", [{ type: "heatmap", z: rows.map((r) => r.r), x: lags.map((l) => `${l > 0 ? "+" : ""}${l}`), y: rows.map((r) => `${r.year}${r.leap ? "★" : ""} ${r.seg === "Jan1–Feb28" ? "Jan–Feb" : "Mar–Dec"}`), zmin: -1, zmax: 1, colorscale: divScale(), xgap: 1, ygap: 1,
+    colorbar: { thickness: 10, outlinewidth: 0, tickfont: { size: 10, color: css("--ink-2") } }, hovertemplate: "%{y}<br>lag %{x} d: r %{z:.3f}<extra></extra>" }],
+    base({ margin: { l: 110, r: 8, t: 4, b: 36 }, yaxis: { autorange: "reversed", tickfont: { size: 9, family: css("--mono") } }, xaxis: { title: { text: "lag (days)" } } }));
+}
+
+/* ---- Findings: one block per comparison group */
+function renderFindingsMore() {
+  const el5 = $("fCardsCe5"), elE = $("fCardsE5ed");
+  if (!el5.dataset.done) {
+    el5.dataset.done = "1";
+    C5.loadMeta().then((m) => { el5.innerHTML = cardsHTML(c5Cards(m)); }).catch((e) => { el5.innerHTML = `<p class="note">Could not load data/camelsh_era5us.json (${e}).</p>`; });
+  }
+  if (!elE.dataset.done) {
+    elE.dataset.done = "1";
+    fetch("data/era5us.json").then((r) => r.json()).then((m) => {
+      const c = (k) => m.comps.find((x) => x.key === k), dm = (k) => c(k).windows.dm, era = m.comps.filter((x) => x.ed_source !== "Daymet");
+      const rdd = era.map((x) => x.windows.utc.cell_median_r_dd).filter((x) => x != null).sort((a, b) => a - b), a = m.annual_check;
+      elE.innerHTML = cardsHTML([
+        { st: "warn", tag: "Check provenance", h: "ERA5-DAYMET's Daymet-labelled fields track ERA5", link: ["era5us", "ERA5 0.25° US"],
+          p: `Hourly ERA5 0.25° over a 24 h window starting ${dm("tmax").offset} h (tmax, tmin) and ${dm("prcp").offset} h (precipitation) from 00 UTC reproduces them: per-cell r of day-to-day changes <b>${fmt(dm("tmax").cell_median_r_dd)}</b>, <b>${fmt(dm("tmin").cell_median_r_dd)}</b> and <b>${fmt(dm("prcp").cell_median_r_dd)}</b>. ${a.year} CONUS precipitation ${fmt(a.ed_mean, 0)} mm vs ${fmt(a.e5_mean, 0)} mm, spatial r ${fmt(a.spatial_r, 3)}. They look like time-shifted ERA5, not station Daymet.` },
+        { st: "ok", tag: "Consistent", h: "ERA5-sourced fields are UTC-day ERA5 means", link: ["era5us", "ERA5 0.25° US"],
+          p: `For the ${era.length} fields ERA5-DAYMET takes from ERA5 (2 m temperature, winds, soil water, z500, t850, q850), the 24 h window that best matches is the UTC day (scan peak ${[...new Set(era.map((x) => x.scan_best))].map((x) => sgn(x)).join(", ")} h), with per-cell r(Δday) ${fmt(rdd[0], 3)}–${fmt(rdd[rdd.length - 1], 3)}. Both grids store 365 days per year: Feb 29 kept, Dec 31 dropped in leap years.` }]);
+    }).catch((e) => { elE.innerHTML = `<p class="note">Could not load data/era5us.json (${e}).</p>`; });
+  }
+}
+
+/* ---------------------------------------------------------------- OVERLAY EXPLORER (lazy: data/ov/overlay.json + one file per layer and time block) */
+const OV = { M: null, _m: null, blocks: new Map(), inst: {}, geo: {}, maps: {} };
+const OV_CFG = {
+  ced: { ab: "CAMELSH vs ERA5-DAYMET", scale: "d", period: "harvey", range: ["2017-08-20", "2017-09-08"], t: "2017-08-27",
+    items: [{ base: "pc:P_DM", on: true, op: 1 }, { base: "ed:P", on: true, op: 0.9 }, { diff: ["pc:P_DM", "ed:P"], on: false, op: 1 }],
+    lede: `CAMELSH gauges (points) over ERA5-DAYMET (raster), one day at a time. ERA5-DAYMET's <b>Daymet-labelled</b> tmax, tmin and precipitation cover a day that starts 5–14 h before 00 UTC, so pair them with the CAMELSH <b>Daymet window</b> layers; the CAMELSH UTC-day layers pair with ERA5-DAYMET's ERA5 fields (2 m temperature).` },
+  e5ed: { ab: "ERA5 0.25° vs ERA5-DAYMET", scale: "d", period: "vortex", range: ["2019-01-24", "2019-02-10"], t: "2019-01-31",
+    items: [{ diff: ["e5:TMIN_DM", "ed:TMIN"], on: true, op: 1 }, { base: "ed:TMIN", on: true, op: 1 }, { base: "e5:TMIN_DM", on: false, op: 1 }],
+    lede: `Two grids on one map: ERA5 0.25° (native cells) and ERA5-DAYMET (10′, shown at 1/3°). The default difference layer subtracts ERA5-DAYMET's Daymet-labelled tmin from hourly ERA5's minimum over the window starting −11 h. It stays within about ±2 °C almost everywhere, with ERA5 slightly colder (−0.6 °C per cell over 1980–2020; see the provenance check on the <a href="#era5us">ERA5 0.25° US</a> page). Switch to hourly to see the ERA5 hours behind a daily value.` },
+  ce5: { ab: "CAMELSH vs ERA5 0.25°", scale: "h", period: "harvey_h", range: ["2017-08-25", "2017-08-29"], t: "2017-08-26T18",
+    items: [{ base: "pc:P", on: true, op: 1 }, { base: "e5:P", on: true, op: 0.9 }, { diff: ["pc:P", "e5:P"], on: false, op: 1 }],
+    lede: `CAMELSH gauges (NLDAS-2 basin averages) over ERA5 0.25° cells, hour by hour. Both carry UTC hour labels as stored: ERA5 labels each 1 h precipitation total with the hour it ends. Step through a storm and watch whether rain reaches the gauges in the same hour (see <a href="#ce5time">Timing &amp; calendar</a> for the lag measured over 41 years).` },
+  pq: { ab: "CAMELSH precipitation vs CAMELSH streamflow", scale: "d", period: "colorado", range: ["2013-09-05", "2013-09-25"], t: "2013-09-12",
+    items: [{ base: "pc:P", on: true, op: 1 }, { base: "pc:Q", on: true, op: 1 }],
+    lede: `Rain and flow at the same CAMELSH gauges: precipitation (inner dots) over specific streamflow (outer rings, flow divided by drainage area, log colour scale). Flow responds after the rain, by a delay that grows with basin size (see <a href="#lag">Rain → flow lag</a>). Gauges without a flow record that day have no ring.` },
+};
+const OV_PAGE = { "ov-ced": "ced", "ov-e5ed": "e5ed", "ov-ce5": "ce5", "ov-pq": "pq" };
+const ovLay = (id) => OV.M.layers.find((l) => l.id === id);
+const OV_HOURLY_OF = { P_DM: "P", TMAX_DM: "T", TMIN_DM: "T" };   // daily-only CAMELSH / ERA5 layers -> the hourly field they are built from
+const ovId = (base, sc) => {
+  const id = `${base}:${sc}`; if (OV.M.files[id]) return id;
+  const [ds, v] = base.split(":"), h = sc === "h" && OV_HOURLY_OF[v] && `${ds}:${OV_HOURLY_OF[v]}:h`;
+  return h && OV.M.files[h] ? h : null;
+};
+const ovWinKey = (L) => /Daymet/.test(L.window) ? "dm" : /UTC day/.test(L.window) ? "utc" : "h";
+const ovAnyId = (base) => ovId(base, "d") || ovId(base, "h");
+const ovIso = (ms, sc) => { const s = new Date(ms).toISOString(); return sc === "d" ? s.slice(0, 10) : s.slice(0, 13) + ":00"; };
+const ovDsCol = (ds) => ({ pc: "--pc", ed: "--ed", e5: "--e5" }[ds]);
+
+function ovLoadMeta() {
+  return OV._m || (OV._m = fetch("data/ov/overlay.json").then((r) => { if (!r.ok) throw new Error("data/ov/overlay.json: HTTP " + r.status); return r.json(); }).then((m) => {
+    for (const f of Object.values(m.files)) for (const b of Object.values(f)) b._empty = new Set(b.empty);
+    OV.M = m; return m;
+  }));
+}
+
+/* geometry: gauges, or raster cells (flat index on the dataset's display grid) */
+function ovGeo(ds) {
+  if (OV.geo[ds]) return OV.geo[ds];
+  const d = OV.M.datasets[ds]; let G;
+  if (d.kind === "points") G = { kind: "points", n: NB };
+  else {
+    const bin = atob(d.cells), u = new Uint8Array(bin.length); for (let k = 0; k < bin.length; k++) u[k] = bin.charCodeAt(k);
+    const cells = new Uint16Array(u.buffer), g = d.grid, pos = new Int32Array(g.ny * g.nx).fill(-1);
+    cells.forEach((c, k) => { pos[c] = k; });
+    G = { kind: "raster", n: cells.length, cells, pos, g, iy: Int16Array.from(cells, (c) => Math.floor(c / g.nx)), ix: Int16Array.from(cells, (c) => c % g.nx) };
+  }
+  return (OV.geo[ds] = G);
+}
+function ovCellNear(G, lon, lat, rmax = 2) {   // stored cell containing (lon, lat), else the nearest within rmax cells
+  const g = G.g, x0 = Math.round((lon - g.lon0) / g.d), y0 = Math.round((lat - g.lat0) / g.d);
+  let best = -1, bd = 1e9;
+  for (let r = 0; r <= rmax && best < 0; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+    const x = x0 + dx, y = y0 + dy; if (x < 0 || y < 0 || x >= g.nx || y >= g.ny) continue;
+    const k = G.pos[y * g.nx + x]; if (k < 0) continue;
+    const d = dx * dx + dy * dy; if (d < bd) { bd = d; best = k; }
+  }
+  return best;
+}
+const ovCellLL = (G, k) => [G.g.lon0 + G.ix[k] * G.g.d, G.g.lat0 + G.iy[k] * G.g.d];
+function ovGaugeMap(ds) {   // gauge -> cell of raster ds
+  const key = "g:" + ds; if (OV.maps[key]) return OV.maps[key];
+  const G = ovGeo(ds), m = new Int32Array(NB); for (let i = 0; i < NB; i++) m[i] = ovCellNear(G, B.lon[i], B.lat[i], 1);
+  return (OV.maps[key] = m);
+}
+function ovRasterMap(a, b) {   // cell of raster a -> cell of raster b
+  const key = a + ">" + b; if (OV.maps[key]) return OV.maps[key];
+  const GA = ovGeo(a), GB = ovGeo(b), m = new Int32Array(GA.n);
+  for (let k = 0; k < GA.n; k++) { const [lo, la] = ovCellLL(GA, k); m[k] = ovCellNear(GB, lo, la, 1); }
+  return (OV.maps[key] = m);
+}
+function ovNearestGauge(lon, lat, maxDeg = 0.5) {
+  let best = -1, bd = maxDeg * maxDeg; const c = Math.cos(lat * Math.PI / 180);
+  for (let i = 0; i < NB; i++) { const dx = (B.lon[i] - lon) * c, dy = B.lat[i] - lat, d = dx * dx + dy * dy; if (d < bd) { bd = d; best = i; } }
+  return best;
+}
+
+/* colour scales: shared per quantity, so every dataset of one quantity uses the same colours */
+function lerpScale(stops, p) {
+  p = Math.min(1, Math.max(0, p)); let i = 1; while (i < stops.length - 1 && stops[i][0] < p) i++;
+  const [p0, c0] = stops[i - 1], [p1, c1] = stops[i], t = p1 > p0 ? (p - p0) / (p1 - p0) : 0;
+  const h = (c) => [1, 3, 5].map((k) => parseInt(c.slice(k, k + 2), 16)), a = h(c0), b = h(c1);
+  return `rgb(${a.map((v, k) => Math.round(v + (b[k] - v) * t)).join(",")})`;
+}
+function ovColor(qk, diff) {
+  const Q = OV.M.quantities[qk];
+  if (diff) { const m = Q.diff; return { stops: divScale(), plotly: divScale(), lo: -m, hi: m, f: (v) => (v + m) / (2 * m), ticks: [-m, -m / 2, 0, m / 2, m], unit: Q.unit, z: (v) => v }; }
+  const base_ = Q.cmap === "div" ? divScale() : Q.cmap === "precip" ? precipScale() : seqScale();
+  if (Q.tf === "sqrt") {
+    const lo = Q.lo, hi = Q.hi;
+    return { stops: base_, plotly: Array.from({ length: 33 }, (_, k) => [k / 32, lerpScale(base_, Math.sqrt(k / 32))]), lo, hi, f: (v) => Math.sqrt(Math.max(0, (v - lo) / (hi - lo))),
+      ticks: hi >= 50 ? [0, 5, 20, 45, hi] : [0, 1, 4, 9, hi], unit: Q.unit, z: (v) => v };
+  }
+  if (Q.tf === "log") {
+    const L0 = Math.log10(Q.lo), L1 = Math.log10(Q.hi);
+    return { stops: base_, plotly: base_, lo: L0, hi: L1, f: (v) => (Math.log10(v) - L0) / (L1 - L0), ticks: [Q.lo, 0.1, 1, 10, Q.hi], unit: Q.unit, z: (v) => v > 0 ? Math.log10(v) : NaN, log: true };
+  }
+  return { stops: base_, plotly: base_, lo: Q.lo, hi: Q.hi, f: (v) => (v - Q.lo) / (Q.hi - Q.lo), ticks: [0, 0.25, 0.5, 0.75, 1].map((p) => Q.lo + p * (Q.hi - Q.lo)), unit: Q.unit, z: (v) => v };
+}
+function ovCbar(C) {
+  const grad = C.stops.map(([p, c]) => `${c} ${(100 * p).toFixed(1)}%`).join(","), n = C.ticks.length;
+  const ft = (v) => Math.abs(v) >= 10 || v === 0 ? String(Math.round(v)) : String(+v.toPrecision(2));
+  return `<div class="cbar" aria-hidden="true"><div class="g" style="background:linear-gradient(to right,${grad})"></div>` +
+    C.ticks.map((v, k) => `<span class="t${k === n - 1 ? " last" : ""}" style="left:${(100 * Math.min(1, Math.max(0, C.f(v)))).toFixed(1)}%">${ft(v)}</span>`).join("") + `<span class="u">${C.unit}</span></div>`;
+}
+
+/* ---- time axis and data blocks */
+function ovAxis(I) {
+  const p = OV.M.periods.find((x) => x.key === I.period), st = I.scale === "d" ? DAYMS : 36e5;
+  const p0 = Date.parse(p.start.length > 10 ? p.start + ":00Z" : p.start + "T00:00Z"), pn = p.blocks.reduce((s, b) => s + b.n, 0);
+  const s = Date.parse(I.start + "T00:00Z"), e = Date.parse(I.end + "T00:00Z") + (I.scale === "d" ? 0 : 23 * 36e5);
+  const i0 = Math.min(pn - 1, Math.max(0, Math.round((s - p0) / st))), i1 = Math.max(i0, Math.min(pn - 1, Math.round((e - p0) / st)));
+  I.ax = { p, p0, st, pn, i0, i1, n: i1 - i0 + 1 };
+}
+const ovT = (I, k) => I.ax.p0 + (I.ax.i0 + k) * I.ax.st;
+const ovBlockOf = (I, i) => I.ax.p.blocks.find((b) => i >= b.i0 && i < b.i0 + b.n);
+const ovFile = (I, id, b) => OV.M.files[id] && OV.M.files[id][`${I.ax.p.key}/${b.id}`];
+async function ovFetchBlock(id, f) {
+  const L = ovLay(id), n = ovGeo(L.ds).n;
+  const r = await fetch("data/ov/" + f.file); if (!r.ok) throw new Error(f.file + ": HTTP " + r.status);
+  const bin = atob((await r.text()).trim()), u = new Uint8Array(bin.length); for (let k = 0; k < bin.length; k++) u[k] = bin.charCodeAt(k);
+  if (typeof DecompressionStream === "undefined") throw new Error("this browser cannot decompress the data (no DecompressionStream)");
+  const raw = new Uint8Array(await new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream("deflate"))).arrayBuffer());
+  const N = raw.length >> 1, hi = raw.subarray(0, N), lo = raw.subarray(N), q = new Int16Array(N);
+  for (let i = 0; i < N; i++) q[i] = (hi[i] << 8) | lo[i];
+  if (f.delta) for (let i = n; i < N; i++) q[i] = q[i] + q[i - n];                 // int16 wrap-around, as written
+  const out = new Float32Array(N), s = L.i2, lg = L.tf === "log10";
+  for (let i = 0; i < N; i++) { const v = q[i]; out[i] = v === -32768 ? NaN : lg ? Math.pow(10, v * s) : v * s; }
+  return out;
+}
+function ovBlock(id, f) {
+  let c = OV.blocks.get(f.file);
+  if (!c) {
+    c = { state: "loading", data: null, err: null };
+    c.promise = ovFetchBlock(id, f).then((d) => { c.state = "ready"; c.data = d; }).catch((e) => { c.state = "error"; c.err = e; console.error(e); });
+    OV.blocks.set(f.file, c);
+  }
+  return c;
+}
+function ovFrame(I, id, k) {   // {v} | {loading} | {nodata} | {error}
+  const i = I.ax.i0 + k, b = ovBlockOf(I, i), f = b && ovFile(I, id, b);
+  if (!f) return { nodata: true };
+  if (f._empty.has(i - b.i0)) return { nodata: true };
+  const c = ovBlock(id, f);
+  if (c.state === "error") return { error: c.err };
+  if (c.state !== "ready") { c.promise.then(() => ovRequest(I)); return { loading: true }; }
+  const n = ovGeo(ovLay(id).ds).n, j = i - b.i0;
+  return { v: c.data.subarray(j * n, (j + 1) * n) };
+}
+const ovItemIds = (I, it) => it.diff ? it.diff.map((b) => ovId(b, I.scale)) : [ovId(it.base, I.scale)];
+function ovPrefetch(I) {   // every block of the range for every shown layer, a few at a time
+  const bl = I.ax.p.blocks.filter((b) => b.i0 <= I.ax.i1 && b.i0 + b.n > I.ax.i0), want = [];
+  for (const it of I.items) if (it.on) for (const id of ovItemIds(I, it)) if (id) for (const b of bl) { const f = ovFile(I, id, b); if (f) want.push([id, f]); }
+  const todo = want.filter(([, f]) => !OV.blocks.has(f.file));
+  I.loadTotal = want.length; I.loadDone = want.length - todo.length;
+  let next = 0; const tick = () => { I.loadDone++; ovStatus(I); };
+  const worker = async () => { while (next < todo.length) { const [id, f] = todo[next++]; await ovBlock(id, f).promise; tick(); ovRequest(I); } };
+  for (let w = 0; w < 4; w++) worker();
+  ovStatus(I);
+  return Promise.all(want.map(([id, f]) => ovBlock(id, f).promise));
+}
+
+/* ---- why a frame has no data */
+function ovWhy(ds, ms, scale, window) {
+  const d = OV.M.datasets[ds], r0 = Date.parse(d.range[0] + ":00Z"), r1 = Date.parse(d.range[1] + ":00Z"), t = new Date(ms), y = t.getUTCFullYear();
+  if (ms < r0 || ms > r1 + (scale === "d" ? 0 : 0)) return `outside its record (${d.range[0].slice(0, 4)}–${d.range[1].slice(0, 4)})`;
+  if (isLeapY(y) && t.getUTCMonth() === 11 && t.getUTCDate() === 31) return "Dec 31 of a leap year is not stored";
+  if (/Daymet window/.test(window || "")) return "its shifted 24 h window reaches a day with no data";
+  return "no values at this time";
+}
+
+/* ---- traces */
+function ovLand() {
+  const g = M.grid;
+  if (!LANDZ) landTrace();
+  return { type: "heatmap", z: LANDZ, x0: g.lon0, dx: g.d, y0: g.lat0, dy: g.d, colorscale: [[0, css("--water")], [1, css("--land")]], showscale: false, hoverinfo: "none", zsmooth: false };
+}
+function ovHeat(G, v, C, op, name) {
+  const g = G.g, z = Array.from({ length: g.ny }, () => new Array(g.nx).fill(null));
+  for (let k = 0; k < G.n; k++) { const x = v[k]; if (x === x) z[G.iy[k]][G.ix[k]] = C.z(x); }
+  return { type: "heatmap", z, x0: g.lon0, dx: g.d, y0: g.lat0, dy: g.d, zmin: C.lo, zmax: C.hi, colorscale: C.plotly, showscale: false, opacity: op, zsmooth: false, hoverongaps: false,
+    hovertemplate: `${name}<br>%{y:.2f}°N %{x:.2f}°: %{z:.2f} ${C.unit}<extra></extra>` };
+}
+function ovPts(v, C, op, size, name) {
+  const idx = []; for (let g = 0; g < NB; g++) if (v[g] === v[g]) idx.push(g);
+  const f = (x) => Math.abs(x) >= 100 ? x.toFixed(0) : Math.abs(x) >= 1 ? x.toFixed(1) : x.toFixed(2);
+  return { type: "scattergl", mode: "markers", x: idx.map((g) => B.lon[g]), y: idx.map((g) => B.lat[g]), customdata: idx,
+    text: idx.map((g) => `${B.id[g]}<br>${name}: ${f(v[g])} ${C.unit}`), hovertemplate: "%{text}<extra></extra>",
+    marker: { size, color: idx.map((g) => C.z(v[g])), cmin: C.lo, cmax: C.hi, colorscale: C.plotly, opacity: op, line: { width: 0 } } };
+}
+function ovDiffCheck(I, it) {
+  const [ia, ib] = ovItemIds(I, it);
+  if (!ia || !ib) return { bad: `no ${I.scale === "h" ? "hourly" : "daily"} data for ${!ia ? "A" : "B"}` };
+  const A = ovLay(ia), Bb = ovLay(ib);
+  if (ia === ib) return { bad: "A and B are the same layer" };
+  if (A.q !== Bb.q) return { bad: "A and B are different quantities" };
+  if (OV.M.quantities[A.q].diff == null) return { bad: "no difference scale for this quantity" };
+  return { ia, ib, A, B: Bb, pts: ovGeo(A.ds).kind === "points" || ovGeo(Bb.ds).kind === "points" };
+}
+function ovDiffFrame(I, it, k) {
+  const c = ovDiffCheck(I, it); if (c.bad) return { bad: c.bad };
+  const fa = ovFrame(I, c.ia, k), fb = ovFrame(I, c.ib, k);
+  if (fa.error || fb.error) return { error: fa.error || fb.error };
+  if (fa.loading || fb.loading) return { loading: true };
+  if (fa.nodata || fb.nodata) return { nodata: true, which: fa.nodata ? c.A : c.B };
+  const GA = ovGeo(c.A.ds), GB = ovGeo(c.B.ds);
+  if (c.pts) {
+    const ma = GA.kind === "raster" ? ovGaugeMap(c.A.ds) : null, mb = GB.kind === "raster" ? ovGaugeMap(c.B.ds) : null, out = new Float32Array(NB);
+    for (let g = 0; g < NB; g++) { const a = ma ? (ma[g] >= 0 ? fa.v[ma[g]] : NaN) : fa.v[g], b = mb ? (mb[g] >= 0 ? fb.v[mb[g]] : NaN) : fb.v[g]; out[g] = a - b; }
+    return { pts: true, v: out, c };
+  }
+  const m = ovRasterMap(c.A.ds, c.B.ds), out = new Float32Array(GA.n);
+  for (let k2 = 0; k2 < GA.n; k2++) out[k2] = m[k2] >= 0 ? fa.v[k2] - fb.v[m[k2]] : NaN;
+  return { G: GA, v: out, c };
+}
+const ovName = (L) => `${OV.M.datasets[L.ds].label} ${L.label.charAt(0).toLowerCase() + L.label.slice(1)}`;
+const ovDiffName = (c) => `${OV.M.datasets[c.A.ds].label} − ${OV.M.datasets[c.B.ds].label}`;
+
+function ovDraw(I) {
+  I.raf = 0;
+  const k = I.k, ms = ovT(I, k), tr = [ovLand()], notes = [], vis = I.items.filter((it) => it.on).reverse();
+  const nPts = vis.filter((it) => it.diff ? (ovDiffCheck(I, it).pts) : (ovId(it.base, I.scale) && ovGeo(ovLay(ovId(it.base, I.scale)).ds).kind === "points")).length;
+  let pr = 0, loading = false;
+  for (const it of vis) {
+    if (it.diff) {
+      const d = ovDiffFrame(I, it, k);
+      it.state = d.bad ? "bad" : d.loading ? "loading" : d.nodata ? "nodata" : d.error ? "error" : "ok"; it.why = d.bad || "";
+      if (d.loading) loading = true;
+      if (d.nodata) notes.push([ovDiffName(ovDiffCheck(I, it)) + " difference", "one of its layers has no data"]);
+      if (it.state !== "ok") continue;
+      const C = ovColor(d.c.A.q, true);
+      if (d.pts) tr.push(ovPts(d.v, C, it.op, 5 + 3.5 * (nPts - 1 - pr++), ovDiffName(d.c)));
+      else tr.push(ovHeat(d.G, d.v, C, it.op, ovDiffName(d.c)));
+      continue;
+    }
+    const id = ovId(it.base, I.scale);
+    if (!id) { it.state = "dis"; continue; }
+    const L = ovLay(id), G = ovGeo(L.ds), fr = ovFrame(I, id, k);
+    it.state = fr.loading ? "loading" : fr.nodata ? "nodata" : fr.error ? "error" : "ok";
+    if (fr.loading) { loading = true; if (G.kind === "points") pr++; continue; }
+    if (fr.nodata) { const why = ovWhy(L.ds, ms, I.scale, L.window); it.why = why; notes.push([OV.M.datasets[L.ds].label, why]); if (G.kind === "points") pr++; continue; }
+    if (fr.error) { it.why = String(fr.error); continue; }
+    const C = ovColor(L.q, false);
+    if (G.kind === "raster") tr.push(ovHeat(G, fr.v, C, it.op, ovName(L)));
+    else tr.push(ovPts(fr.v, C, it.op, 5 + 3.5 * (nPts - 1 - pr++), ovName(L)));
+  }
+  Plotly.react(I.el.map, tr, mapLayout({ uirevision: I.key, hovermode: "closest" }), CFG);
+  if (!I.el.map._ovb) { I.el.map._ovb = true; I.el.map.on("plotly_click", (ev) => ovClick(I, ev)); }
+  const lab = ovIso(ms, I.scale) + (I.scale === "h" ? " UTC" : "");
+  I.el.tlab.textContent = lab;
+  I.el.mapTitle.textContent = `${lab} · ${I.scale === "d" ? "daily" : "hourly"}`;
+  I.notes = notes; I.loadingNow = loading;
+  ovStatus(I); ovBadges(I); ovStrip(I); ovPopLine(I);
+}
+function ovRequest(I) { if (!I.raf) I.raf = requestAnimationFrame(() => { if (S.tab === "ov-" + I.key) ovDraw(I); else I.raf = 0; }); }
+function ovStatus(I) {
+  const parts = [];
+  if (I.loadTotal && I.loadDone < I.loadTotal) parts.push(`Loading data blocks ${I.loadDone} / ${I.loadTotal}…`);
+  else if (I.loadingNow) parts.push("Loading…");
+  const byWhy = {}; for (const [n, w] of I.notes || []) (byWhy[w] = byWhy[w] || []).push(n);
+  for (const [w, ns] of Object.entries(byWhy)) parts.push(`<span class="nd">No data</span> for ${[...new Set(ns)].join(", ")}: ${w}.`);
+  I.el.status.innerHTML = parts.join(" ") || "&nbsp;";
+}
+function ovBadges(I) {
+  I.el.list.querySelectorAll("li[data-uid]").forEach((li) => {
+    const it = I.items.find((x) => String(x.uid) === li.dataset.uid), b = li.querySelector(".badge"); if (!it || !b) return;
+    const t = { nodata: "no data", loading: "loading", error: "error", bad: "check A/B", dis: I.scale === "h" ? "daily only" : "hourly only" }[it.on || it.state === "dis" ? it.state : ""];
+    b.hidden = !t; b.textContent = t || ""; b.className = "badge" + (it.state === "loading" || it.state === "dis" ? " muted" : ""); b.title = it.why || "";
+  });
+}
+
+/* ---- availability strip under the slider: one row per shown layer */
+function ovAvail(I, id, k) { const i = I.ax.i0 + k, b = ovBlockOf(I, i), f = b && ovFile(I, id, b); return !!f && !f._empty.has(i - b.i0); }
+function ovStrip(I) {
+  const cv = I.el.strip, rows = I.items.filter((it) => it.on && it.state !== "dis" && it.state !== "bad");
+  const W = cv.clientWidth || 300, rh = 4, gap = 2, H = rows.length ? rows.length * (rh + gap) + 4 : 0, dpr = window.devicePixelRatio || 1;
+  cv.style.height = H + "px"; cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  if (!H) return;
+  const x = cv.getContext("2d"); x.scale(dpr, dpr); x.clearRect(0, 0, W, H);
+  const inset = 8, w = W - 2 * inset, n = I.ax.n, cw = w / n;
+  rows.forEach((it, r) => {
+    const ids = ovItemIds(I, it), y = 2 + r * (rh + gap);
+    x.fillStyle = css("--rule"); x.fillRect(inset, y, w, rh);
+    x.fillStyle = it.diff ? css("--ink-2") : css(ovDsCol(ovLay(ids[0]).ds));
+    for (let k = 0; k < n; k++) if (ids.every((id) => ovAvail(I, id, k))) x.fillRect(inset + k * cw, y, Math.max(cw, 1), rh);
+  });
+  x.fillStyle = css("--ink"); x.fillRect(inset + (I.k + 0.5) * cw - 1, 0, 2, H);
+}
+
+/* ---- layer list */
+function ovRowHTML(I, it, n, N) {
+  const btns = `<span class="ovl-btns"><button type="button" data-a="up" ${n === 0 ? "disabled" : ""} aria-label="Move up" title="Move up">▲</button><button type="button" data-a="down" ${n === N - 1 ? "disabled" : ""} aria-label="Move down" title="Move down">▼</button><button type="button" data-a="rm" aria-label="Remove layer" title="Remove">✕</button></span>`;
+  const op = `<input type="range" min="0" max="1" step="0.05" value="${it.op}" data-a="op" aria-label="Opacity"><span class="op">${Math.round(it.op * 100)}%</span>`;
+  if (it.diff) {
+    const c = ovDiffCheck(I, it), cat = ovCatalog(I), sel = (k) => `<select data-a="d${k}" aria-label="Layer ${k === 0 ? "A" : "B"}">${cat.map(([g, list]) => `<optgroup label="${g}">${list.map(([b, l]) => `<option value="${b}"${b === it.diff[k] ? " selected" : ""}>${l}</option>`).join("")}</optgroup>`).join("")}</select>`;
+    const win = !c.bad && ovWinKey(c.A) !== ovWinKey(c.B) ? `<small style="color:var(--crit)">Different day windows: ${c.A.window} vs ${c.B.window}.</small>` : "";
+    return `<li class="ovl${it.on ? "" : " off"}" data-uid="${it.uid}"><div class="ovl-top"><input type="checkbox" data-a="on" ${it.on ? "checked" : ""} aria-label="Show layer"><span class="sw" style="background:var(--ink-2)"></span>
+      <span class="ovl-name"><b>Difference A − B</b>${c.bad ? `<small style="color:var(--crit)">${c.bad}</small>` : `<small>${ovDiffName(c)}, ${c.pts ? "at the gauges (raster value of the gauge's cell)" : "on " + OV.M.datasets[c.A.ds].label + "'s grid (nearest cell of B)"}</small>${win}`}</span><span class="badge" hidden></span>${btns}</div>
+      <div class="ovl-diff">A ${sel(0)} − B ${sel(1)}</div><div class="ovl-bot">${op}${c.bad ? "" : ovCbar(ovColor(c.A.q, true))}</div></li>`;
+  }
+  const id = ovId(it.base, I.scale), L = ovLay(id || ovAnyId(it.base)), d = OV.M.datasets[L.ds];
+  return `<li class="ovl${it.on ? "" : " off"}${id ? "" : " dis"}" data-uid="${it.uid}"><div class="ovl-top"><input type="checkbox" data-a="on" ${it.on ? "checked" : ""} ${id ? "" : "disabled"} aria-label="Show layer"><span class="sw" style="background:var(${ovDsCol(L.ds)})"></span>
+    <span class="ovl-name"><b>${d.label}</b> ${L.label}<small>${d.kind === "points" ? "gauges" : d.ds_note || (L.ds === "ed" ? "1/3° display grid" : "0.25° cells")} · ${L.window}</small></span><span class="badge" hidden></span>${btns}</div>
+    <div class="ovl-bot">${op}${ovCbar(ovColor(L.q, false))}</div></li>`;
+}
+function ovCatalog(I) {   // [[dataset label, [[base, label], ...]], ...] for this time step
+  return ["pc", "ed", "e5"].map((ds) => [OV.M.datasets[ds].label + (I.scale === "h" && !OV.M.datasets[ds].hourly ? " (daily only)" : ""),
+    OV.M.layers.filter((l) => l.ds === ds && l.scale === I.scale).map((l) => [`${l.ds}:${l.var}`, `${l.label} · ${l.window}`])]).filter(([, l]) => l.length);
+}
+function ovList(I) {
+  const N = I.items.length;
+  I.el.list.innerHTML = I.items.map((it, n) => ovRowHTML(I, it, n, N)).join("") || `<li class="note">No layers. Add one below.</li>`;
+  const cat = ovCatalog(I);
+  I.el.addSel.innerHTML = cat.map(([g, list]) => `<optgroup label="${g}">${list.map(([b, l]) => `<option value="${b}">${l}</option>`).join("")}</optgroup>`).join("") +
+    (I.scale === "h" ? `<optgroup label="ERA5-DAYMET"><option disabled>daily only, no hourly data</option></optgroup>` : "");
+  ovBadges(I);
+}
+function ovItemsChanged(I) { ovList(I); ovPrefetch(I); ovRequest(I); setPageHead(S.tab); if (I.click) ovPopup(I, I.click); }
+
+/* ---- click → time series of every shown layer at that place */
+function ovClick(I, ev) {
+  const p = ev.points.find((q) => typeof q.customdata === "number") || ev.points[0]; if (!p) return;
+  const g = typeof p.customdata === "number" ? p.customdata : null;
+  ovPopup(I, g != null ? { lon: B.lon[g], lat: B.lat[g], g } : { lon: +p.x, lat: +p.y, g: null });
+}
+async function ovPopup(I, loc) {
+  I.click = loc; I.el.pop.hidden = false;
+  const g = loc.g != null ? loc.g : ovNearestGauge(loc.lon, loc.lat);
+  const used = [];
+  if (g >= 0) used.push(`gauge ${B.id[g]}${loc.g == null ? ` (nearest, ${fmt(Math.hypot((B.lon[g] - loc.lon) * Math.cos(loc.lat * Math.PI / 180), B.lat[g] - loc.lat) * 111, 0)} km)` : ""}`);
+  for (const ds of ["ed", "e5"]) { const G = ovGeo(ds), k = ovCellNear(G, loc.lon, loc.lat); if (k >= 0 && I.items.some((it) => it.on && ovItemIds(I, it).some((id) => id && ovLay(id).ds === ds))) { const [lo, la] = ovCellLL(G, k); used.push(`${OV.M.datasets[ds].label} cell ${la.toFixed(2)}°N ${lo.toFixed(2)}°`); } }
+  I.el.popTitle.textContent = loc.g != null ? `Gauge ${B.id[loc.g]} · ${fmt(B.area[loc.g], 0)} km²` : `${loc.lat.toFixed(2)}°N ${loc.lon.toFixed(2)}°`;
+  I.el.popSub.textContent = `${ovIso(ovT(I, 0), I.scale)} to ${ovIso(ovT(I, I.ax.n - 1), I.scale)} · ${used.join(" · ") || "no stored cell or gauge here"}. Gaps are times with no data.`;
+  Plotly.purge(I.el.popPlot); I.el.popPlot.innerHTML = `<div class="empty">Loading the series…</div>`;
+  await ovPrefetch(I);
+  if (I.click !== loc) return;
+  I.el.popPlot.innerHTML = "";
+  const n = I.ax.n, xs = Array.from({ length: n }, (_, k) => ovIso(ovT(I, k), I.scale)), groups = new Map(), tr = [];
+  const series = (id, idx) => { const out = new Array(n); for (let k = 0; k < n; k++) { const f = ovFrame(I, id, k); out[k] = f.v && idx >= 0 && isFinite(f.v[idx]) ? f.v[idx] : null; } return out; };
+  const idxFor = (ds) => OV.M.datasets[ds].kind === "points" ? g : ovCellNear(ovGeo(ds), loc.lon, loc.lat);
+  for (const it of I.items.filter((x) => x.on)) {
+    let y, name, color, dash = "solid", q;
+    if (it.diff) {
+      const c = ovDiffCheck(I, it); if (c.bad) continue;
+      const a = series(c.ia, idxFor(c.A.ds)), b = series(c.ib, idxFor(c.B.ds));
+      y = a.map((v, k) => v != null && b[k] != null ? v - b[k] : null); name = ovDiffName(c) + " (A − B)"; color = css("--ink"); dash = "dot"; q = c.A.q + ":diff";
+    } else {
+      const id = ovId(it.base, I.scale); if (!id) continue;
+      const L = ovLay(id); y = series(id, idxFor(L.ds)); name = `${OV.M.datasets[L.ds].label}: ${L.label} (${L.window})`; color = css(ovDsCol(L.ds)); q = L.q;
+      if (/Daymet/.test(L.window)) dash = "dash";
+    }
+    if (!groups.has(q)) groups.set(q, groups.size);
+    const ax = groups.get(q) ? String(groups.get(q) + 1) : "";
+    const isP = q.startsWith("P") && !q.endsWith("diff");
+    tr.push({ x: xs, y, yaxis: "y" + ax, type: "scatter", mode: n > 120 ? "lines" : "lines+markers", connectgaps: false, name, line: { color, width: 1.8, dash, shape: isP ? "hv" : "linear" }, marker: { size: 4 },
+      hovertemplate: `%{y:.2f}<extra>${name.split(":")[0]}</extra>` });
+  }
+  if (!tr.length) { I.el.popPlot.innerHTML = `<div class="empty">No shown layer has data at this place.</div>`; return; }
+  const nq = groups.size, L = base({ showlegend: true, hovermode: "x unified", legend: { orientation: "h", y: -0.12, font: { size: 10.5, color: css("--ink-2") } }, margin: { l: 52, r: 10, t: 6, b: 40 },
+    xaxis: { type: "date", anchor: "y" + (nq > 1 ? nq : "") } });
+  [...groups.entries()].forEach(([q, gi]) => {
+    const Q = OV.M.quantities[q.split(":")[0]], dom = [1 - (gi + 1) / nq + (gi + 1 < nq ? 0.06 : 0), 1 - gi / nq];
+    L["yaxis" + (gi ? gi + 1 : "")] = { ...L.yaxis, domain: dom, title: { text: (q.endsWith("diff") ? "A − B, " : "") + Q.unit, font: { size: 11 } }, type: Q.tf === "log" && !q.endsWith("diff") ? "log" : "linear", zeroline: q.endsWith("diff") };
+  });
+  tr.forEach((t) => { if (t.yaxis !== "y") t.xaxis = "x"; });
+  I.popLayout = L;
+  Plotly.react(I.el.popPlot, tr, { ...L, shapes: [ovCursor(I)] }, CFG);
+}
+const ovCursor = (I) => ({ type: "line", xref: "x", yref: "paper", x0: ovIso(ovT(I, I.k), I.scale), x1: ovIso(ovT(I, I.k), I.scale), y0: 0, y1: 1, line: { color: css("--crit"), width: 1.5 } });
+function ovPopLine(I) { if (I.click && !I.el.pop.hidden && I.popLayout && I.el.popPlot.data) Plotly.relayout(I.el.popPlot, { shapes: [ovCursor(I)] }); }
+
+/* ---- controls */
+function ovSetRange(I, keepMs) {
+  ovAxis(I);
+  const p = I.ax.p, d0 = p.start.slice(0, 10), d1 = p.scale === "h" ? new Date(Date.parse(p.end + ":00Z") - 36e5).toISOString().slice(0, 10) : p.end;
+  I.el.start.min = I.el.end.min = d0; I.el.start.max = I.el.end.max = d1;
+  I.el.start.value = ovIso(ovT(I, 0), "d"); I.el.end.value = ovIso(ovT(I, I.ax.n - 1), "d");
+  I.start = I.el.start.value; I.end = I.el.end.value;
+  I.el.slider.max = I.ax.n - 1;
+  I.k = keepMs == null ? 0 : Math.min(I.ax.n - 1, Math.max(0, Math.round((keepMs - ovT(I, 0)) / I.ax.st)));
+  I.el.slider.value = I.k;
+  I.el.period.innerHTML = OV.M.periods.filter((x) => x.scale === I.scale).map((x) => `<option value="${x.key}"${x.key === I.period ? " selected" : ""}>${x.label}</option>`).join("");
+  I.el.rangeNote.textContent = `${I.ax.n} ${I.scale === "d" ? "days" : "hours"} (precomputed: ${d0} to ${d1})`;
+  I.el.scale.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.v === I.scale ? "true" : "false"));
+  ovList(I); ovPrefetch(I); ovRequest(I); setPageHead(S.tab);
+  if (I.click) ovPopup(I, I.click);
+}
+function ovSetScale(I, sc) {
+  if (sc === I.scale) return;
+  const ms = ovT(I, I.k), list = OV.M.periods.filter((p) => p.scale === sc);
+  const span = (p) => [Date.parse(p.start.length > 10 ? p.start + ":00Z" : p.start + "T00:00Z"), p.scale === "h" ? Date.parse(p.end + ":00Z") - 36e5 : Date.parse(p.end + "T00:00Z") + DAYMS - 1];
+  let p = list.find((x) => { const [a, b] = span(x); return ms >= a && ms <= b; });
+  if (!p) p = list.slice().sort((a, b) => Math.abs(span(a)[0] - ms) - Math.abs(span(b)[0] - ms))[0];
+  const oldS = I.start, oldE = I.end;
+  I.scale = sc; I.period = p.key;
+  if (sc === "h") { const [a, b] = span(p); I.start = new Date(a).toISOString().slice(0, 10); I.end = new Date(b).toISOString().slice(0, 10); }
+  else { I.start = oldS; I.end = oldE; }
+  ovSetRange(I, Math.min(Math.max(ms, span(p)[0]), span(p)[1]));
+}
+function ovStop(I) { if (I.timer) { clearTimeout(I.timer); I.timer = null; } I.el.play.textContent = "▶"; I.el.play.setAttribute("aria-label", "Play"); }
+function ovPlay(I) {
+  if (I.timer) return ovStop(I);
+  I.el.play.textContent = "❚❚"; I.el.play.setAttribute("aria-label", "Pause");
+  const step = () => {
+    if (S.tab !== "ov-" + I.key) return ovStop(I);
+    I.k = (I.k + 1) % I.ax.n; I.el.slider.value = I.k; ovDraw(I);
+    I.timer = setTimeout(step, 1000 / I.fps);
+  };
+  I.timer = setTimeout(step, 1000 / I.fps);
+}
+
+function ovInit(key) {
+  const sec = $("tab-ov-" + key), cfg = OV_CFG[key], M2 = OV.M;
+  const sizeMB = (M2.total_bytes / 1e6).toFixed(0), nFiles = Object.values(M2.files).reduce((s, f) => s + Object.keys(f).length, 0);
+  const dPer = M2.periods.filter((p) => p.scale === "d").map((p) => p.label.split(" · ")[0]).join("; "), hPer = M2.periods.filter((p) => p.scale === "h").map((p) => p.label.split(" · ")[0]).join("; ");
+  sec.innerHTML = `<p class="lede">${cfg.lede}</p>
+  <div class="ov-top">
+    <div class="ctl"><label>Time step</label><div class="seg" data-r="scale" role="group" aria-label="Time step"><button type="button" data-v="d" aria-pressed="false">Daily</button><button type="button" data-v="h" aria-pressed="false" title="ERA5-DAYMET has no hourly data">Hourly</button></div></div>
+    <div class="ctl"><label for="ovP-${key}">Period</label><select id="ovP-${key}" data-r="period"></select></div>
+    <div class="ctl"><label for="ovS-${key}">Start</label><input type="date" id="ovS-${key}" data-r="start"></div>
+    <div class="ctl"><label for="ovE-${key}">End</label><input type="date" id="ovE-${key}" data-r="end"></div>
+    <p class="note" data-r="rangeNote" style="margin:0 0 6px"></p>
+  </div>
+  <div class="ov-grid">
+    <div class="panel" style="min-width:0">
+      <h2 data-r="mapTitle">Map</h2><p class="sub">Drag the slider to scrub through time; ← / → step when it has focus. Click a gauge or grid cell for time series.</p>
+      <div class="plot ov-map" data-r="map"></div>
+      <div class="ov-time">
+        <button type="button" class="playbtn" data-r="prev" aria-label="Step back" title="Step back">‹</button>
+        <button type="button" class="playbtn" data-r="play" aria-label="Play">▶</button>
+        <button type="button" class="playbtn" data-r="next" aria-label="Step forward" title="Step forward">›</button>
+        <div style="flex:1 1 220px;min-width:160px"><input type="range" data-r="slider" min="0" max="0" step="1" value="0" aria-label="Time" style="width:100%"><canvas class="ov-strip" data-r="strip" aria-hidden="true"></canvas></div>
+        <span class="mono" data-r="tlab"></span>
+        <select data-r="speed" aria-label="Playback speed">${[1, 2, 4, 8, 16].map((v) => `<option value="${v}"${v === 4 ? " selected" : ""}>${v} steps/s</option>`).join("")}</select>
+      </div>
+      <p class="ov-status" data-r="status" role="status">&nbsp;</p>
+    </div>
+    <div class="panel">
+      <h2>Layers</h2><p class="sub">Top of the list is drawn on top. Strips under the slider show when each shown layer has data.</p>
+      <ul class="ov-layers" data-r="list"></ul>
+      <div class="ov-add"><select data-r="addSel" aria-label="Layer to add"></select><button type="button" data-r="add">Add layer</button><button type="button" data-r="addDiff">Add difference</button></div>
+      <p class="note" style="margin-top:12px">Precomputed for the overlay: daily ${dPer}; hourly ${hPer}. CAMELSH: all ${NB.toLocaleString("en-US")} gauges. ERA5-DAYMET: ${M2.datasets.ed.note}. ERA5 0.25°: ${M2.datasets.e5.note}. Values are int16-quantised (0.05 °C, 0.05 mm d⁻¹, 0.01 mm h⁻¹), ${sizeMB} MB in ${nFiles} files, loaded by month or event as needed. Days a dataset does not store (Dec 31 of leap years, years outside its record) are drawn as no data, never interpolated. Exact statistics are on the other pages.</p>
+    </div>
+  </div>
+  <div class="ov-pop" data-r="pop" hidden role="dialog" aria-label="Time series at the clicked place">
+    <div class="hd"><div><h3 data-r="popTitle"></h3><p data-r="popSub"></p></div><button type="button" class="x" data-r="popX" aria-label="Close">✕</button></div>
+    <div class="plot" data-r="popPlot"></div>
+  </div>`;
+  const el = {}; sec.querySelectorAll("[data-r]").forEach((x) => { el[x.dataset.r] = x; });
+  const I = { key, cfg, el, scale: cfg.scale, period: cfg.period, start: cfg.range[0], end: cfg.range[1], k: 0, fps: 4, timer: null, raf: 0, click: null,
+    items: cfg.items.map((it, n) => ({ ...it, diff: it.diff ? it.diff.slice() : undefined, uid: n })), uid: cfg.items.length };
+  OV.inst[key] = I;
+  el.scale.onclick = (e) => { const b = e.target.closest("button"); if (b) ovSetScale(I, b.dataset.v); };
+  el.period.onchange = () => { const p = OV.M.periods.find((x) => x.key === el.period.value); I.period = p.key; I.start = p.start.slice(0, 10);
+    I.end = p.scale === "h" ? new Date(Date.parse(p.end + ":00Z") - 36e5).toISOString().slice(0, 10) : p.end; ovSetRange(I, null); };
+  const onDates = () => { let s = el.start.value || I.start, e = el.end.value || I.end; if (s > e) [s, e] = [e, s]; const ms = ovT(I, I.k); I.start = s; I.end = e; ovSetRange(I, ms); };
+  el.start.onchange = onDates; el.end.onchange = onDates;
+  el.slider.oninput = () => { I.k = +el.slider.value; ovRequest(I); };
+  el.prev.onclick = () => { ovStop(I); I.k = Math.max(0, I.k - 1); el.slider.value = I.k; ovRequest(I); };
+  el.next.onclick = () => { ovStop(I); I.k = Math.min(I.ax.n - 1, I.k + 1); el.slider.value = I.k; ovRequest(I); };
+  el.play.onclick = () => ovPlay(I);
+  el.speed.onchange = () => { I.fps = +el.speed.value; };
+  el.popX.onclick = () => { el.pop.hidden = true; I.click = null; };
+  el.add.onclick = () => { I.items.unshift({ base: el.addSel.value, on: true, op: 1, uid: I.uid++ }); ovItemsChanged(I); };
+  el.addDiff.onclick = () => {
+    const on = I.items.filter((it) => !it.diff && ovId(it.base, I.scale));
+    let a = on[0] ? on[0].base : null, b = null;
+    if (a) { const qa = ovLay(ovId(a, I.scale)).q; const m = on.find((it) => it.base !== a && ovLay(ovId(it.base, I.scale)).q === qa); b = m ? m.base : null; }
+    if (!a || !b) { const l = OV.M.layers.filter((x) => x.scale === I.scale); a = a || `${l[0].ds}:${l[0].var}`; const qa = ovLay(ovId(a, I.scale)).q; const m = l.find((x) => x.q === qa && `${x.ds}:${x.var}` !== a); b = m ? `${m.ds}:${m.var}` : a; }
+    I.items.unshift({ diff: [a, b], on: true, op: 1, uid: I.uid++ }); ovItemsChanged(I);
+  };
+  el.list.addEventListener("change", (e) => {
+    const li = e.target.closest("li[data-uid]"); if (!li) return; const it = I.items.find((x) => String(x.uid) === li.dataset.uid), a = e.target.dataset.a;
+    if (a === "on") { it.on = e.target.checked; ovItemsChanged(I); }
+    else if (a === "d0" || a === "d1") { it.diff[+a[1]] = e.target.value; ovItemsChanged(I); }
+  });
+  el.list.addEventListener("input", (e) => {
+    if (e.target.dataset.a !== "op") return; const li = e.target.closest("li[data-uid]"), it = I.items.find((x) => String(x.uid) === li.dataset.uid);
+    it.op = +e.target.value; li.querySelector(".op").textContent = Math.round(it.op * 100) + "%"; ovRequest(I);
+  });
+  el.list.addEventListener("click", (e) => {
+    const bt = e.target.closest("button[data-a]"); if (!bt) return; const li = bt.closest("li[data-uid]"), n = I.items.findIndex((x) => String(x.uid) === li.dataset.uid);
+    if (bt.dataset.a === "rm") I.items.splice(n, 1);
+    else { const m = bt.dataset.a === "up" ? n - 1 : n + 1; if (m < 0 || m >= I.items.length) return; [I.items[n], I.items[m]] = [I.items[m], I.items[n]]; }
+    ovItemsChanged(I);
+  });
+  ovSetRange(I, Date.parse(cfg.t.length > 10 ? cfg.t + ":00Z" : cfg.t + "T00:00Z"));
+}
+function renderOv() {
+  const key = OV_PAGE[S.tab], sec = $("tab-ov-" + key);
+  if (!OV.M) {
+    if (!sec.innerHTML.trim()) sec.innerHTML = `<div class="loading">Loading overlay index…</div>`;
+    ovLoadMeta().then(() => { if (S.tab === "ov-" + key) renderOv(); }).catch((e) => { sec.innerHTML = `<div class="loading">Could not load data/ov/overlay.json. ${e}</div>`; });
+    return;
+  }
+  if (!OV.inst[key]) { ovInit(key); return; }
+  const I = OV.inst[key];
+  ovList(I); ovRequest(I);
+  if (I.click && !I.el.pop.hidden) ovPopup(I, I.click);
+}
+function ovHead(key) {
+  const I = OV.inst[key], cfg = OV_CFG[key];
+  if (!I || !OV.M) return [cfg.ab, "map layers of your choice", cfg.scale === "d" ? "daily" : "hourly", "per layer"];
+  const shown = I.items.filter((it) => it.on), vars = new Set(), wins = new Set();
+  for (const it of shown) {
+    if (it.diff) { const c = ovDiffCheck(I, it); if (!c.bad) { vars.add(`${OV.M.quantities[c.A.q].label.toLowerCase()} difference`); wins.add(c.A.window); wins.add(c.B.window); } continue; }
+    const id = ovId(it.base, I.scale); if (!id) continue; const L = ovLay(id); vars.add(L.label.replace(/ \(.*\)$/, "").replace(/ ending at the label$/, "")); wins.add(L.window);
+  }
+  return [cfg.ab, [...vars].join(", ") || "no layer shown", I.scale === "d" ? "daily" : "hourly", [...wins].join("; ") || "–"];
+}
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") Object.values(OV.inst).forEach((I) => { if (!I.el.pop.hidden) { I.el.pop.hidden = true; I.click = null; } }); });
+
+/* ---------------------------------------------------------------- navigation: comparison group → page */
+const NAV = [
+  { key: "overview", label: "Overview", sw: [], pages: [["findings", "Findings"], ["datasets", "Datasets"]] },
+  { key: "ced", label: "CAMELSH × ERA5-DAYMET", sw: ["pc", "ed"], pages: [["compare", "Compare variables"], ["leap", "Leap years"], ["boundary", "Day boundaries"], ["corr", "Correlations"], ["ov-ced", "Overlay explorer"]] },
+  { key: "e5ed", label: "ERA5-DAYMET × ERA5 0.25°", sw: ["ed", "e5"], pages: [["era5us", "ERA5 0.25° US"], ["ov-e5ed", "Overlay explorer"]] },
+  { key: "ce5", label: "CAMELSH × ERA5 0.25°", sw: ["pc", "e5"], pages: [["ce5", "Compare variables"], ["ce5time", "Timing & calendar"], ["ov-ce5", "Overlay explorer"]] },
+  { key: "pcint", label: "CAMELSH internal", sw: ["pc"], pages: [["lag", "Rain → flow lag"], ["ov-pq", "Overlay explorer"]] },
+];
+const pageGroup = (t) => NAV.find((g) => g.pages.some((p) => p[0] === t)) || NAV[0];
+const scanPair = (n) => M.scan.pairs.find((x) => x.name === n);
+const bandRange = (n) => { const b = scanPair(n).band_peaks; return `${Math.max(...b)}…${Math.min(...b)} h`; };
+const GROUP_NOTE = {
+  ced: () => `ERA5-DAYMET fields from <b>ERA5, on UTC days</b>: 2 m temperature, 10 m U and V, soil water, humidity at 850 hPa. Fields <b>labelled Daymet, on shifted 24 h windows</b> (start relative to 00 UTC by longitude band, network median in brackets): <b>tmax</b> ${bandRange("T_max")} (${scanPair("T_max").peak} h), <b>tmin</b> ${bandRange("T_min")} (${scanPair("T_min").peak} h), <b>precipitation</b> ${bandRange("P")} (${scanPair("P").peak} h). These offsets come from the Day boundaries scan against CAMELSH hours and are what <code>aligned_loader.py</code> applies; against hourly ERA5 0.25° the same fields peak at −11, −11 and −12 h.`,
+  e5ed: () => `ERA5-DAYMET's Daymet-labelled tmax, tmin and precipitation match hourly ERA5 0.25° over windows starting −11, −11 and −12 h from 00 UTC; its other fields are ERA5 UTC-day means. Both store 365 days a year: Feb 29 kept, Dec 31 dropped in leap years. Common years 1980–2020.`,
+  ce5: () => `Both hourly, with UTC hour labels as stored. Each gauge outlet is paired with the nearest ERA5 0.25° land cell. Common years 1980–2020; Dec 31 of leap years is missing in both and masked.`,
+  pcint: () => `Within CAMELSH: NLDAS-2 basin-average precipitation against USGS streamflow at the same gauge, with ERA5-DAYMET precipitation as a check.`,
+};
+function pageHead(t) {
+  const dm = (k) => k === "P_utc" ? "UTC day (unshifted, for contrast)" : `Daymet window, ${bandRange(k)} from 00 UTC`;
+  switch (t) {
+    case "findings": return ["All three datasets", "headline results of every comparison", "hourly and daily", "per comparison"];
+    case "datasets": return ["ERA5 0.25° · ERA5-DAYMET 10′ · CAMELSH", "every stored variable, units and statistics", "hourly (ERA5 0.25°, CAMELSH), daily (ERA5-DAYMET)", "as stored"];
+    case "compare": { const p = M.pairs.find((x) => x.key === S.pair); return ["CAMELSH vs ERA5-DAYMET", p.label, "daily", p.ed_source === "Daymet" ? dm(p.key) : "UTC day"]; }
+    case "leap": return ["CAMELSH vs ERA5-DAYMET", "2 m temperature (mean, min), precipitation, streamflow timing", "daily, plus hourly around Feb 29", `UTC day (mean); Daymet window (tmin ${bandRange("T_min")}, precipitation ${bandRange("P")})`];
+    case "boundary": return ["CAMELSH vs ERA5-DAYMET", "temperature mean, max, min, precipitation, 10 m U", "daily windows built from CAMELSH hours", "window start scanned −30…+30 h from 00 UTC"];
+    case "corr": return ["CAMELSH vs ERA5-DAYMET", "16 CAMELSH and 8 ERA5-DAYMET variables", "daily", "UTC day (ERA5-DAYMET's Daymet fields as labelled)"];
+    case "era5us": return ["ERA5 0.25° vs ERA5-DAYMET", "10 fields: temperature, tmax, tmin, precipitation, winds, soil water, z500, t850, q850", "hourly, aggregated to daily", "UTC day; Daymet-labelled fields on windows from −11 h (tmax, tmin) and −12 h (precipitation)"];
+    case "ce5": { const v = C5.meta && C5.meta.vars.find((x) => x.key === CS.var); return ["CAMELSH vs ERA5 0.25°", v ? v.label : "temperature, pressure, wind, precipitation", CS.scale, CS.scale === "hourly" ? "UTC hour labels as stored" : "UTC day"]; }
+    case "ce5time": return ["CAMELSH vs ERA5 0.25°", "temperature, surface pressure, U, V, wind speed, precipitation", "hourly (lag scan, diurnal cycle), daily (leap-year test)", "UTC labels; lags −24…+24 h"];
+    case "lag": return ["CAMELSH precipitation vs CAMELSH streamflow (and ERA5-DAYMET precipitation)", "precipitation → streamflow", "daily and hourly", "UTC day; hourly UTC labels"];
+    default: return OV_PAGE[t] ? ovHead(OV_PAGE[t]) : null;
+  }
+}
+function setPageHead(t) {
+  let h; try { h = pageHead(t); } catch (e) { h = null; }
+  if (!h) return;
+  $("pageTitle").innerHTML = `<span class="f ab">${h[0]}</span><span class="f v">${h[1]}</span><span class="f sc">${h[2]}</span><span class="f db">${h[3]}</span>`;
+  const g = pageGroup(t), n = GROUP_NOTE[g.key] ? GROUP_NOTE[g.key]() : "";
+  $("pageNote").innerHTML = n; $("pageNote").hidden = !n;
+}
+function buildNav() {
+  $("groups").innerHTML = NAV.map((g) => `<button type="button" data-g="${g.key}" aria-current="false">${g.sw.length ? `<span class="sws">${g.sw.map((s) => `<span class="sw ${s}"></span>`).join("")}</span>` : ""}${g.label}</button>`).join("");
+  $("groups").onclick = (e) => { const b = e.target.closest("button[data-g]"); if (!b) return; const g = NAV.find((x) => x.key === b.dataset.g); showTab(g.last || g.pages[0][0]); };
+  $("tabs").onclick = (e) => { const b = e.target.closest("button[data-tab]"); if (b) showTab(b.dataset.tab); };
+  window.addEventListener("hashchange", () => { const h = (location.hash || "").slice(1); if (h && h !== S.tab && RENDER[h]) { showTab(h); window.scrollTo(0, 0); } });
+}
+
 /* ---------------------------------------------------------------- shell */
-const RENDER = { findings: renderFindings, compare: renderCompare, leap: renderLeap, boundary: renderBoundary, corr: renderCorr, lag: renderLag, era5us: renderE5, datasets: () => {} };
-function render() { try { RENDER[S.tab](); } catch (e) { console.error(e); } }
+const RENDER = { findings: renderFindings, compare: renderCompare, leap: renderLeap, boundary: renderBoundary, corr: renderCorr, lag: renderLag, era5us: renderE5, datasets: () => {},
+  ce5: renderC5, ce5time: renderC5Time, "ov-ced": renderOv, "ov-e5ed": renderOv, "ov-ce5": renderOv, "ov-pq": renderOv };
+function render() { try { RENDER[S.tab](); } catch (e) { console.error(e); } setPageHead(S.tab); }
 function showTab(t) {
+  if (!RENDER[t]) t = "findings";
   S.tab = t;
-  document.querySelectorAll("#tabs button").forEach((b) => b.setAttribute("aria-selected", b.dataset.tab === t ? "true" : "false"));
+  Object.values(OV.inst).forEach((I) => { if ("ov-" + I.key !== t) ovStop(I); });
+  const g = pageGroup(t); g.last = t;
+  document.querySelectorAll("#groups button").forEach((b) => b.setAttribute("aria-current", b.dataset.g === g.key ? "true" : "false"));
+  $("tabs").innerHTML = g.pages.map(([k, l]) => `<button role="tab" type="button" data-tab="${k}" aria-selected="${k === t}">${l}</button>`).join("");
   document.querySelectorAll("section.tab").forEach((s) => s.hidden = s.id !== "tab-" + t);
-  try { if (/^[a-z0-9]+$/.test(t)) history.replaceState(null, "", "#" + t); } catch (e) {}
+  document.querySelectorAll("section.tab[hidden] .js-plotly-plot").forEach((el) => {
+    if ((el._fullData || []).some((d) => /gl$/.test(d.type))) { Plotly.purge(el); el._bound = false; el._ovb = false; }
+  });
+  try { if (/^[a-z0-9-]+$/.test(t)) history.replaceState(null, "", "#" + t); } catch (e) {}
   render();
   window.dispatchEvent(new Event("resize"));
 }
@@ -1126,7 +2191,10 @@ async function boot() {
   // controls
   opts("driftPair", M.pairs.map((p) => [p.key, p.label]), "T_mean");
   $("driftPair").addEventListener("change", renderDrift);
-  opts("cmpPair", M.pairs.map((p) => [p.key, `${p.label} (${p.ed_source})`]), S.pair);
+  const pairOpt = (p) => `<option value="${p.key}">${p.label}${p.ed_source === "Daymet" ? (p.day === "Daymet day" ? ` · window ${bandRange(p.key)}` : " · UTC day (unshifted)") : " · UTC day"}</option>`;
+  $("cmpPair").innerHTML = `<optgroup label="ERA5 fields (UTC day)">${M.pairs.filter((p) => p.ed_source !== "Daymet").map(pairOpt).join("")}</optgroup>` +
+    `<optgroup label="Labelled Daymet (shifted 24 h window)">${M.pairs.filter((p) => p.ed_source === "Daymet").map(pairOpt).join("")}</optgroup>`;
+  $("cmpPair").value = S.pair;
   const setMetricOpts = () => { opts("cmpMetric", METRICS.filter((m) => metric(S.pair, m[0])).map((m) => [m[0], m[1]]), S.metric); if (!metric(S.pair, S.metric)) { S.metric = "bias"; $("cmpMetric").value = "bias"; } };
   setMetricOpts();
   $("cmpPair").addEventListener("change", (e) => { S.pair = e.target.value; setMetricOpts(); render(); });
@@ -1147,7 +2215,7 @@ async function boot() {
   opts("ccBasin", SAMPLE.map((b) => [b, `${B.id[b]} · ${fmt(B.area[b], 0)} km²`]));
   ["ccX", "ccY", "ccBasin"].forEach((id) => $(id).addEventListener("change", () => { if (id === "ccBasin") { select(+$("ccBasin").value); } else renderCcf(); }));
   seg("lagMapMode", [["pc", "Point-cloud P"], ["ed", "ERA5-DAYMET P"]], "lagMode", render);
-  document.querySelectorAll("#tabs button").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.tab)));
+  buildNav();
   document.querySelectorAll("#tab-datasets .seg button").forEach((b) => b.addEventListener("click", () => {
     document.querySelectorAll(`#tab-datasets .seg button[data-ds="${b.dataset.ds}"]`).forEach((x) => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
     document.querySelectorAll(`#tab-datasets .dsw[data-ds="${b.dataset.ds}"]`).forEach((w) => w.hidden = w.dataset.dom !== b.dataset.dom);
