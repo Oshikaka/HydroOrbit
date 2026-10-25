@@ -570,6 +570,12 @@ section.tab{padding-top:14px}
         <div class="panel"><h3>10 m wind speed</h3><p class="sub">m s⁻¹</p><div class="plot short" id="c5DiWS"></div></div>
         <div class="panel"><h3>Precipitation</h3><p class="sub" id="c5DiSub">mm h⁻¹</p><div class="plot short" id="c5DiP"></div></div>
       </div>
+      <div class="ds-head"><h2>Which daily window matches best? Precipitation</h2><p class="sub" id="c5PwSub">Daily totals over 24 h windows of hour labels starting s hours from 00 UTC, both datasets the same window; median over gauges of r.</p></div>
+      <div class="grid g2">
+        <div class="panel"><h3>r of daily precipitation vs window start</h3><p class="sub">Band = interquartile range over gauges. s = 0 is the UTC day; s = −11 h is the 12–12 UTC day (hours ending 13:00 … 12:00 UTC).</p><div class="plot" id="c5Pw"></div></div>
+        <div class="panel"><h3>Best window per gauge</h3><p class="sub">Number of gauges whose daily r peaks at each window start.</p><div class="plot" id="c5PwHist"></div><div id="c5PwCard"></div></div>
+      </div>
+
       <div class="ds-head"><h2>Leap years</h2><p class="sub">Both datasets carry real UTC dates, so a wrong leap-year calendar in either would show up as a one-day shift after Feb 29. Daily values (UTC day), correlation of day-to-day changes for temperature and of daily totals for precipitation, ERA5 0.25° shifted by the lag.</p></div>
       <div class="controls"><div class="ctl"><label>Test variable</label><div class="seg" id="c5LeapVar" role="group" aria-label="Test variable"></div></div></div>
       <div class="grid g2">
@@ -1380,6 +1386,7 @@ const C5_METRICS = [
   ["wet_e5", "Wet fraction, ERA5 0.25°", "seq"], ["p99_pc", "99th percentile, CAMELSH", "seq"], ["p99_e5", "99th percentile, ERA5 0.25°", "seq"],
   ["mean_pc", "Mean, CAMELSH", "seq"], ["mean_e5", "Mean, ERA5 0.25°", "seq"], ["lagbest", "Best hourly lag (h)", "lag"]];
 const c5v = (k) => C5.meta.vars.find((v) => v.key === k);
+const C5_SCALE = { hourly: "Hourly", daily: "Daily (UTC day)", daily12: "Daily, 12–12 UTC" };
 const c5unit = (v, scale) => scale === "hourly" ? v.unit_hourly : v.unit_daily;
 const c5m = (key, scale, m) => { const n = m === "lagbest" ? `lagbest_${key}` : `m_${key}_${scale}_${m}`; return C5.has(n) ? C5.arr(n) : null; };
 const c5Col = () => ({ T2m: css("--pc"), PS: css("--ink-3"), U10: css("--alt"), V10: css("--ed"), WS: css("--ink"), P: css("--e5") });
@@ -1406,7 +1413,7 @@ function c5Cards(m) {
     { st: peak0 === leapT.length ? "ok" : "warn", tag: "Calendar", h: "Leap years line up; Dec 31 masked in both", link: ["ce5time", "Timing & calendar"],
       p: `Daily temperature changes match best at lag 0 in <b>${peak0} of ${leapT.length}</b> year-segments (Jan 1–Feb 28 and Mar 1–Dec 30 of ${m.years[0]}–${m.years[m.years.length - 1]}); leap-year Mar–Dec r ${fmt(lm(2))} at lag 0 vs ${fmt(lm(1))} / ${fmt(lm(3))} at ∓1 day. ERA5 0.25° has no Dec 31 in leap years and CAMELSH's is NaN, so ${nLeap} days are masked in both. ERA5 1979 and CAMELSH 2021–2025 lie outside the overlap.` },
     ...(m.precip_step ? [{ st: m.precip_step.frac_pc_gt_1_2 > 0.5 ? "warn" : "info", tag: "Check hourly precipitation", h: `CAMELSH precipitation steps down at ${m.precip_step.hour + 1}:00 UTC`, link: ["ce5time", "Timing & calendar"],
-      p: `Mean CAMELSH precipitation in the hour labelled ${m.precip_step.hour}:00 UTC is <b>${fmt(m.precip_step.ratio_pc)}×</b> the next hour's (median over gauges; ERA5 0.25°: ${fmt(m.precip_step.ratio_e5)}×). At ${m.precip_step.n_largest_step_here.toLocaleString("en-US")} of ${m.precip_step.n.toLocaleString("en-US")} gauges this is the largest hour-to-hour change of the mean diurnal cycle. 12 UTC is the day boundary of the CPC daily gauge analysis that NLDAS-2 precipitation is scaled to, so this is likely an artefact of splitting daily totals into hours. Daily totals over 12–12 UTC are unaffected; hourly timing near 12 UTC is not reliable.` }] : []),
+      p: `Mean CAMELSH precipitation in the hour labelled ${m.precip_step.hour}:00 UTC is <b>${fmt(m.precip_step.ratio_pc)}×</b> the next hour's (median over gauges; ERA5 0.25°: ${fmt(m.precip_step.ratio_e5)}×). At ${m.precip_step.n_largest_step_here.toLocaleString("en-US")} of ${m.precip_step.n.toLocaleString("en-US")} gauges this is the largest hour-to-hour change of the mean diurnal cycle. The cause is not confirmed. If it came from splitting 12–12 UTC daily gauge totals into hours, daily totals over 12–12 UTC days would agree best${m.precip_window ? `, but they agree worst: daily r ${fmt(m.precip_window.r_12, 3)} over 12–12 UTC days vs ${fmt(m.precip_window.r_utc, 3)} over UTC days (window scan on the Timing page)` : ""}. Use UTC-day totals; hourly CAMELSH timing near 12 UTC is not reliable.` }] : []),
     { st: "info", tag: "Systematic", h: "Level differences", link: ["ce5", "Compare variables"],
       p: `Median CAMELSH − ERA5 0.25°: temperature <b>${sgn(s.T2m.daily.bias, 2)} °C</b>, surface pressure ${sgn(s.PS.daily.bias, 1)} hPa (basin-average vs cell elevation), wind speed ${sgn(s.WS.daily.bias, 2)} m s⁻¹ with CAMELSH winds more variable (hourly std ratio U ${fmt(s.U10.hourly.sd_ratio)}, V ${fmt(s.V10.hourly.sd_ratio)}), precipitation ratio <b>${fmt(s.P.daily.ratio)}</b>. Gauge-to-cell distance: median ${fmt(m.pairing.km_median, 1)} km, max ${fmt(m.pairing.km_max, 1)} km.` },
   ];
@@ -1433,8 +1440,13 @@ function c5Init() {
     if (!ok.find((x) => x[0] === CS.metric)) { CS.metric = "r_anom"; $("c5Metric").value = CS.metric; }
   };
   metricOpts();
-  $("c5Var").onchange = (e) => { CS.var = e.target.value; metricOpts(); render(); };
-  segObj("c5Scale", [["hourly", "Hourly"], ["daily", "Daily (UTC day)"]], CS, "scale", () => { metricOpts(); render(); });
+  const scaleSeg = () => {   // the 12–12 UTC day exists for precipitation only
+    if (CS.scale === "daily12" && !m.summary[CS.var].daily12) CS.scale = "daily";
+    segObj("c5Scale", Object.entries(C5_SCALE).filter(([k]) => m.summary[CS.var][k] || k !== "daily12"), CS, "scale", () => { metricOpts(); render(); });
+    $("c5Scale").querySelectorAll("button").forEach((b) => { if (b.dataset.v === "daily12") b.title = "Precipitation summed over hours labelled 13:00 to 12:00 UTC (the 12–12 UTC day)"; });
+  };
+  scaleSeg();
+  $("c5Var").onchange = (e) => { CS.var = e.target.value; scaleSeg(); metricOpts(); render(); };
   $("c5Metric").onchange = (e) => { CS.metric = e.target.value; render(); };
   $("c5Find").onchange = (e) => { const k = B.id.indexOf(e.target.value.trim()); if (k >= 0) select(k); else e.target.setCustomValidity("No gauge with that ID"), e.target.reportValidity(); };
   $("c5Find").oninput = (e) => e.target.setCustomValidity("");
@@ -1443,7 +1455,7 @@ function c5Init() {
   $("c5Win").onchange = (e) => { CS.win = e.target.value; c5Series(); };
   segObj("c5DriftM", [["bias", "Mean difference"], ["r_anom", "r (anomalies)"]], CS, "drift", c5Drift);
   $("c5Table").onclick = (e) => { const r = e.target.closest("tr[data-k]"); if (!r) return; CS.var = r.dataset.k; CS.scale = r.dataset.s; $("c5Var").value = CS.var;
-    $("c5Scale").querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.v === CS.scale ? "true" : "false")); metricOpts(); render(); };
+    scaleSeg(); metricOpts(); render(); };
   const P = m.pairing, y0 = m.years[0], y1 = m.years[m.years.length - 1];
   $("c5Lede").innerHTML = `Every CAMELSH gauge against hourly <b>ERA5 0.25°</b>, ${y0}–${y1} (${m.years.length} years, the years both datasets cover). <b>Pairing:</b> each gauge outlet with the <b>nearest ERA5 0.25° cell centre that is land</b> (land_sea_mask ≥ 0.5): ${P.n_cells.toLocaleString("en-US")} cells for ${m.n_gauges.toLocaleString("en-US")} gauges, median ${fmt(P.km_median, 1)} km away. There is no basin-area weighting: CAMELSH forcing is a basin average, so large basins compare an area mean with one ~28 km cell. <b>Calendar:</b> both use UTC hour labels on one continuous axis; Dec 31 of the ${m.period.leap_years.length} leap years is absent in ERA5 0.25° and NaN in CAMELSH, and is masked in both (never interpolated). Daily values are complete UTC days. Variables are the ones both datasets store: 2 m temperature, surface pressure, 10 m wind (U, V, speed) and precipitation. Not compared: ${m.not_compared.map((x) => `<code>${x.field}</code>`).join(", ")} (no matching ERA5 0.25° field; ERA5 humidity exists on pressure levels only).`;
   $("c5Cards").innerHTML = cardsHTML(c5Cards(m).map((c) => ({ ...c, link: c.link && c.link[0] === "ce5" ? null : c.link })));
@@ -1463,9 +1475,9 @@ function c5Init() {
 function c5Table() {
   const m = C5.M, cols = [["bias", "Diff", 2], ["rmse", "RMSE", 2], ["r", "r", 3], ["r_anom", "r(anom)", 3], ["sd_ratio", "Std ratio", 2], ["ratio", "Mean ratio", 2], ["wet_pc", "Wet % CAMELSH", -1], ["wet_e5", "Wet % ERA5", -1]];
   const rows = [];
-  for (const v of m.vars) for (const scale of ["hourly", "daily"]) {
+  for (const v of m.vars) for (const scale of ["hourly", "daily", "daily12"].filter((k) => m.summary[v.key][k])) {
     const s = m.summary[v.key][scale], on = v.key === CS.var && scale === CS.scale;
-    rows.push(`<tr class="clickable${on ? " on" : ""}" data-k="${v.key}" data-s="${scale}"><td>${scale === "hourly" ? v.label : ""} <span style="color:var(--ink-3)">${c5unit(v, scale)}</span></td><td style="text-align:left">${scale === "hourly" ? "Hourly" : "Daily (UTC)"}</td>` +
+    rows.push(`<tr class="clickable${on ? " on" : ""}" data-k="${v.key}" data-s="${scale}"><td>${scale === "hourly" ? v.label : ""} <span style="color:var(--ink-3)">${c5unit(v, scale)}</span></td><td style="text-align:left">${C5_SCALE[scale]}</td>` +
       cols.map(([k, , d]) => `<td>${s[k] == null ? "" : d < 0 ? fmt(100 * s[k], 1) : fmt(s[k], d)}</td>`).join("") +
       `<td>${scale === "hourly" ? sgn(m.lag[v.key].peak) + " h" : ""}</td></tr>`);
   }
@@ -1480,7 +1492,7 @@ function renderC5() {
   document.querySelectorAll("#c5Table tr[data-k]").forEach((r) => r.classList.toggle("on", r.dataset.k === CS.var && r.dataset.s === CS.scale));
   $("c5MapTitle").textContent = `${v.label}, ${CS.metric === "lagbest" ? "hourly" : CS.scale}: ${mdef[1].toLowerCase()}`;
   $("c5MapSub").textContent = CS.metric === "lagbest" ? `Lag L (hours) maximising corr(CAMELSH[t], ERA5[t + L]) of the ${v.lag_signal}, 1980–2020.`
-    : `CAMELSH basin average vs the nearest ERA5 0.25° land cell, ${CS.scale === "hourly" ? "every hour" : "UTC days"}, ${m.years[0]}–${m.years[m.years.length - 1]}. Median ${fmt(quantile(vals, 0.5), 3)} ${unit}.`;
+    : `CAMELSH basin average vs the nearest ERA5 0.25° land cell, ${CS.scale === "hourly" ? "every hour" : CS.scale === "daily12" ? "12–12 UTC days (hour labels 13:00 → 12:00)" : "UTC days"}, ${m.years[0]}–${m.years[m.years.length - 1]}. Median ${fmt(quantile(vals, 0.5), 3)} ${unit}.`;
   draw("c5Map", [landTrace(), pointsTrace(vals, mdef[2], unit, mdef[1]), sampleRing(), selTrace()], mapLayout());
   bindMapClick("c5Map");
   const fin = Array.from(vals).filter(isFinite), lo = quantile(fin, 0.005), hi = quantile(fin, 0.995);
@@ -1569,7 +1581,7 @@ function c5Area() {
 /* ---- timing & calendar page */
 function renderC5Time() {
   if (!c5Ready()) return;
-  c5Cover(); c5Cal(); c5Lag(); c5LagMap(); c5LagBands(); c5Diurnal(); c5Leap();
+  c5Cover(); c5Cal(); c5Lag(); c5LagMap(); c5LagBands(); c5Diurnal(); c5PWin(); c5Leap();
 }
 function c5Cover() {
   const m = C5.M, cv = m.coverage, rows = [["CAMELSH", cv.camelsh, "--pc"], ["ERA5 0.25° US", cv.era5, "--e5"], ["ERA5-DAYMET 10′", cv.era5daymet, "--ed"]];
@@ -1623,7 +1635,7 @@ function c5LagBands() {
 }
 function c5Diurnal() {
   const ps = C5.M.precip_step;
-  if (ps) $("c5DiSub").innerHTML = `CAMELSH precipitation drops from the hour labelled ${ps.hour}:00 to ${ps.hour + 1}:00 UTC (median ratio ${fmt(ps.ratio_pc)}; ERA5 ${fmt(ps.ratio_e5)}), the day boundary of the CPC gauge analysis behind NLDAS-2. ERA5 peaks in the late afternoon (21–22 UTC).`;
+  if (ps) $("c5DiSub").innerHTML = `CAMELSH precipitation drops from the hour labelled ${ps.hour}:00 to ${ps.hour + 1}:00 UTC (median ratio ${fmt(ps.ratio_pc)}; ERA5 ${fmt(ps.ratio_e5)}); cause not confirmed (see the daily-window scan below). ERA5 peaks in the late afternoon (21–22 UTC).`;
   const sel = []; for (let i = 0; i < NB; i++) if (CS.region === "all" || B.part[i] === CS.region) sel.push(i);
   const hrs = Array.from({ length: 24 }, (_, h) => h);
   for (const [k, id, u] of [["T2m", "c5DiT2m", "°C"], ["WS", "c5DiWS", "m s⁻¹"], ["P", "c5DiP", "mm h⁻¹"]]) {
@@ -1632,6 +1644,21 @@ function c5Diurnal() {
       { x: hrs, y: med(24), name: "ERA5 0.25°", type: "scatter", mode: "lines+markers", line: { color: css("--e5"), width: 2 }, marker: { size: 5 } }],
       base({ hovermode: "x unified", showlegend: true, xaxis: { title: { text: "hour (UTC)" }, dtick: 3 }, yaxis: { title: { text: u } } }));
   }
+}
+function c5PWin() {
+  const w = C5.M.precip_window; if (!w) return;
+  const x = w.offsets, i0 = x.indexOf(0), i12 = x.indexOf(w.p12_offset);
+  draw("c5Pw", [
+    { x: x.concat(x.slice().reverse()), y: toNull(w.q75).concat(toNull(w.q25).reverse()), fill: "toself", fillcolor: css("--e5"), opacity: 0.15, line: { width: 0 }, hoverinfo: "skip", type: "scatter" },
+    { x, y: w.median, type: "scatter", mode: "lines+markers", line: { color: css("--e5"), width: 2.2 }, marker: { size: 5 }, hovertemplate: "window from %{x} h: median r %{y:.3f}<extra></extra>" },
+    { x: [0, w.p12_offset], y: [w.median[i0], w.median[i12]], type: "scatter", mode: "markers+text", text: ["UTC day", "12–12 UTC"], textposition: "top center", textfont: { size: 11, color: css("--ink") },
+      marker: { size: 11, color: [css("--ink-3"), css("--crit")], line: { color: css("--panel"), width: 2 } }, hoverinfo: "skip" }],
+    base({ xaxis: { title: { text: "window start s (hours from 00 UTC, hour labels)" }, dtick: 3 }, yaxis: { title: { text: "median r, daily totals" } } }));
+  draw("c5PwHist", [{ type: "bar", x, y: w.hist, marker: { color: x.map((s) => s === w.peak ? css("--ink") : s === w.p12_offset ? css("--crit") : css("--ink-3")) }, hovertemplate: "window from %{x} h: %{y} gauges<extra></extra>" }],
+    base({ bargap: 0.1, xaxis: { title: { text: "best window start (h)" }, dtick: 3 }, yaxis: { title: { text: "gauges" } } }));
+  const better = w.r_12 > w.r_utc, worst = w.median.indexOf(Math.min(...w.median.filter((v) => v != null))) === i12;
+  $("c5PwCard").innerHTML = cardsHTML([{ st: better ? "warn" : "info", tag: "Daily precipitation", h: better ? "CAMELSH daily precipitation follows 12–12 UTC days" : worst ? "12–12 UTC days agree worst" : "No 12–12 UTC signal",
+    p: `Median r is <b>${fmt(w.r_12, 3)}</b> over 12–12 UTC days vs <b>${fmt(w.r_utc, 3)}</b> over UTC days; ${fmt(100 * w.frac_12_better, 0)}% of gauges agree better on 12–12 UTC days. The best window starts at ${sgn(w.peak)} h. ${better ? "This fits NLDAS-2 precipitation being daily gauge totals for 12–12 UTC days split into hours." : `Cutting days at 12 UTC is the worst choice (only ${w.hist[i12]} gauge${w.hist[i12] === 1 ? "" : "s"} peak there), so the step at 12 UTC is not explained by 12–12 UTC daily totals; windows starting within a couple of hours of 00 UTC agree best (the curve repeats every 24 h, so ${sgn(w.peak)} h ≡ ${sgn(w.peak + 24)} h). Compare CAMELSH precipitation over UTC days.`}` }]);
 }
 function c5Leap() {
   const m = C5.M, rowsAll = m.leap.vars[CS.leapVar], lags = m.leap.lags;
@@ -2323,7 +2350,7 @@ function pageHead(t) {
     case "boundary": return ["CAMELSH vs ERA5-DAYMET", "temperature mean, max, min, precipitation, 10 m U", "daily windows built from CAMELSH hours", "window start scanned −30…+30 h from 00 UTC"];
     case "corr": return ["CAMELSH vs ERA5-DAYMET", "16 CAMELSH and 8 ERA5-DAYMET variables", "daily", "UTC day (ERA5-DAYMET's rolling-24 h fields as stored)"];
     case "era5us": return ["ERA5 0.25° vs ERA5-DAYMET", "10 fields: temperature, tmax, tmin, precipitation, winds, soil water, z500, t850, q850", "hourly, aggregated to daily", "UTC-day means; tmax, tmin, precipitation = UTC-day mean of ERA5's rolling 24 h fields"];
-    case "ce5": { const v = C5.meta && C5.meta.vars.find((x) => x.key === CS.var); return ["CAMELSH vs ERA5 0.25°", v ? v.label : "temperature, pressure, wind, precipitation", CS.scale, CS.scale === "hourly" ? "UTC hour labels as stored" : "UTC day"]; }
+    case "ce5": { const v = C5.meta && C5.meta.vars.find((x) => x.key === CS.var); return ["CAMELSH vs ERA5 0.25°", v ? v.label : "temperature, pressure, wind, precipitation", CS.scale === "daily12" ? "daily" : CS.scale, CS.scale === "hourly" ? "UTC hour labels as stored" : CS.scale === "daily12" ? "12–12 UTC day (hour labels 13:00 → 12:00)" : "UTC day"]; }
     case "ce5time": return ["CAMELSH vs ERA5 0.25°", "temperature, surface pressure, U, V, wind speed, precipitation", "hourly (lag scan, diurnal cycle), daily (leap-year test)", "UTC labels; lags −24…+24 h"];
     case "lag": return ["CAMELSH precipitation vs CAMELSH streamflow (and ERA5-DAYMET precipitation)", "precipitation → streamflow", "daily and hourly", "UTC day; hourly UTC labels"];
     default: return OV_PAGE[t] ? ovHead(OV_PAGE[t]) : null;
