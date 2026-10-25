@@ -60,10 +60,10 @@ input[type=range]{accent-color:var(--e5)}
 .finding a,.panel a{color:var(--pc)}
 .sel-chip{margin-left:auto;font-family:var(--mono);font-size:12px}
 .sel-chip b{font-weight:500;color:var(--ink)}
-nav.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
-nav.tabs button{font:600 13px var(--sans);color:var(--ink-2);background:none;border:0;border-bottom:2px solid transparent;padding:8px 12px 9px;cursor:pointer;white-space:nowrap}
-nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink)}
-nav.tabs button:hover{color:var(--ink)}
+nav.tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding:5px;margin:0 0 10px;background:var(--sunk);border:1px solid var(--rule-strong);border-radius:10px;width:max-content;max-width:100%}
+nav.tabs button{font:600 14px var(--sans);color:var(--ink-2);background:transparent;border:1px solid transparent;border-radius:7px;padding:8px 16px;cursor:pointer;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{color:var(--ink);font-weight:700;background:var(--panel);border-color:var(--rule-strong);box-shadow:0 1px 5px rgba(0,0,0,.14),inset 0 -3px 0 var(--ink)}
+nav.tabs button:hover{color:var(--ink);background:var(--panel)}
 button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 section.tab{padding-top:20px}
 .lede{max-width:72ch;color:var(--ink-2);margin:0 0 18px}
@@ -191,6 +191,8 @@ section.tab{padding-top:14px}
 .ovl-name b.win{font-weight:600;color:var(--ink-2)}
 .ovl-btns button.sty{width:auto;padding:0 7px;font-size:11px}
 .ovl-btns button.sty.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.seg.mini button{font-size:11px;padding:3px 8px}
+.ovl-bot .seg.mini{flex:0 0 auto}
 .ovl-style{margin:8px 0 2px 20px;padding:8px;border:1px dashed var(--rule-strong);border-radius:6px}
 .ovl-style .pals{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
 .ovl-style .pals button{font:500 10.5px var(--sans);color:var(--ink-2);background:var(--panel);border:1px solid var(--rule);border-radius:5px;padding:4px 4px 3px;cursor:pointer;display:flex;flex-direction:column;gap:3px;align-items:stretch}
@@ -241,7 +243,7 @@ section.tab{padding-top:14px}
 .ov-pop .hd p{margin:1px 0 0;font-size:11.5px;color:var(--ink-3)}
 .ov-pop .plot{height:min(46vh,380px)}
 @media (max-width:640px){.ov-pop{left:0;right:0;bottom:0;width:100%;border-radius:10px 10px 0 0;padding-bottom:max(6px,env(safe-area-inset-bottom))}.ov-pop .plot{height:40vh}
-  .wrap{padding-inline:16px}nav.groups .gs{display:none}nav.groups button{min-width:0;padding:6px 10px}header.top .chips,h1 small{display:none}h1{font-size:17px}.top-row{padding-block:10px 8px}nav.groups button{font-size:11.5px;padding:3px 9px 3px 7px}.ov-map{height:66vw;min-height:230px}}
+  .wrap{padding-inline:16px}nav.groups .gs{display:none}nav.groups button{min-width:0;padding:6px 10px}nav.tabs button{font-size:13px;padding:7px 11px}header.top .chips,h1 small{display:none}h1{font-size:17px}.top-row{padding-block:10px 8px}nav.groups button{font-size:11.5px;padding:3px 9px 3px 7px}.ov-map{height:66vw;min-height:230px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 
@@ -1769,7 +1771,7 @@ function ovStops(pal, rev) {
 }
 const ovItemKey = (it) => it.diff ? "diff:" + it.diff.join("|") : it.base;
 function ovStyle(I, it) {
-  if (!it.style) it.style = (I.saved && I.saved[ovItemKey(it)]) || { pal: it.diff ? "rdbu" : OV_DEF_PAL[it.base.split(":")[0]] || "blues", rev: false, lo: null, hi: null };
+  if (!it.style) it.style = (I.saved && I.saved[ovItemKey(it)]) || { pal: it.diff ? "rdbu" : OV_DEF_PAL[it.base.split(":")[0]] || "blues", rev: false, lo: null, hi: null, mode: "fill", step: null };
   return it.style;
 }
 function ovRangeDefault(qk, diff) { const Q = OV.M.quantities[qk]; return diff ? [-Q.diff, Q.diff] : [Q.lo, Q.hi]; }
@@ -1819,6 +1821,7 @@ function ovStyleHTML(I, it, qk, diff) {
     `<button type="button" data-a="pal" data-v="${k}" aria-pressed="${st.pal === k}" title="${P.n}"><i style="background:linear-gradient(to right,${g(k)})"></i>${P.n}</button>`).join("")}</div>
     <div class="rng"><label><input type="checkbox" data-a="rev" ${st.rev ? "checked" : ""}> Reverse</label>
     <label>Min <input type="number" data-a="lo" value="${+lo.toPrecision(4)}" step="any"></label><label>Max <input type="number" data-a="hi" value="${+hi.toPrecision(4)}" step="any"></label>
+    <label title="Contour interval, in the layer's unit; empty = automatic">Contour step <input type="number" data-a="step" value="${st.step > 0 ? st.step : ""}" placeholder="${+ovStep(ovStyleColor(I, it, qk, diff), {}).toPrecision(3)}" step="any" min="0"></label>
     <button type="button" data-a="reset">Reset</button>${I.lock ? `<span class="hint">range shared by every ${OV.M.quantities[qk].label.toLowerCase()}${diff ? " difference" : ""} layer</span>` : ""}</div></div>`;
 }
 
@@ -1899,6 +1902,39 @@ function ovHeat(G, v, C, op, name) {
   return { type: "heatmap", z, x0: g.lon0, dx: g.d, y0: g.lat0, dy: g.d, zmin: C.lo, zmax: C.hi, colorscale: C.plotly, showscale: false, opacity: op, zsmooth: false, hoverongaps: false,
     hovertemplate: `${name}<br>%{y:.2f}°N %{x:.2f}°: %{z:.2f} ${C.unit}<extra></extra>` };
 }
+function ovStep(C, st) {   // contour interval: user value, else a round number giving about 8 lines
+  if (st.step > 0) return st.step;
+  const raw = (C.hi - C.lo) / 8, e = Math.pow(10, Math.floor(Math.log10(raw))), m = raw / e;
+  return (m < 1.5 ? 1 : m < 3.5 ? 2 : m < 7.5 ? 5 : 10) * e;
+}
+// marching squares on the display grid; one WebGL line trace per level plus a few value labels (Plotly's own contour trace is ~20x slower)
+const OV_MS = [[], [[3, 0]], [[0, 1]], [[3, 1]], [[1, 2]], [[3, 2], [0, 1]], [[0, 2]], [[3, 2]], [[3, 2]], [[0, 2]], [[3, 0], [1, 2]], [[1, 2]], [[3, 1]], [[0, 1]], [[3, 0]], []];
+function ovIsolines(G, v, C, op, name, st) {
+  const g = G.g, nx = g.nx, ny = g.ny, Z = new Float32Array(nx * ny).fill(NaN);
+  for (let k = 0; k < G.n; k++) { const x = v[k]; if (x === x) Z[G.iy[k] * nx + G.ix[k]] = C.z(x); }
+  const size = ovStep(C, st), levels = [];
+  for (let L = Math.ceil(C.lo / size) * size; L <= C.hi + 1e-9 && levels.length < 40; L += size) levels.push(+L.toPrecision(10));
+  const tr = [], lab = { x: [], y: [], t: [] };
+  const fmtL = (L) => Math.abs(L) >= 10 || L === 0 ? String(Math.round(L)) : String(+L.toPrecision(2));
+  for (const L of levels) {
+    const xs = [], ys = [];
+    for (let y = 0; y < ny - 1; y++) for (let x = 0; x < nx - 1; x++) {
+      const a = Z[y * nx + x], b = Z[y * nx + x + 1], c = Z[(y + 1) * nx + x + 1], d = Z[(y + 1) * nx + x];
+      if (!(a === a && b === b && c === c && d === d)) continue;
+      const idx = (a > L) | ((b > L) << 1) | ((c > L) << 2) | ((d > L) << 3);
+      if (idx === 0 || idx === 15) continue;
+      const pt = (e) => e === 0 ? [x + (L - a) / (b - a), y] : e === 1 ? [x + 1, y + (L - b) / (c - b)] : e === 2 ? [x + (L - d) / (c - d), y + 1] : [x, y + (L - a) / (d - a)];
+      for (const [e1, e2] of OV_MS[idx]) { const p1 = pt(e1), p2 = pt(e2); xs.push(g.lon0 + p1[0] * g.d, g.lon0 + p2[0] * g.d, null); ys.push(g.lat0 + p1[1] * g.d, g.lat0 + p2[1] * g.d, null); }
+    }
+    if (!xs.length) continue;
+    const col = lerpScale(C.plotly, 0.3 + 0.7 * Math.min(1, Math.max(0, (L - C.lo) / (C.hi - C.lo))));
+    tr.push({ type: "scattergl", mode: "lines", x: xs, y: ys, line: { color: col, width: 1.7 }, opacity: op, hoverinfo: "skip", connectgaps: false });
+    const nseg = xs.length / 3, nl = Math.min(3, Math.max(1, Math.floor(nseg / 40)));
+    for (let j = 0; j < nl; j++) { const s3 = 3 * Math.floor(nseg * (j + 0.5) / nl); lab.x.push((xs[s3] + xs[s3 + 1]) / 2); lab.y.push((ys[s3] + ys[s3 + 1]) / 2); lab.t.push(fmtL(L)); }
+  }
+  if (lab.t.length) tr.push({ type: "scatter", mode: "text", x: lab.x, y: lab.y, text: lab.t, textfont: { size: 10.5, color: css("--ink"), family: css("--mono") }, hoverinfo: "skip", opacity: op, cliponaxis: true });
+  return tr;
+}
 function ovPts(v, C, op, size, name) {
   const idx = []; for (let g = 0; g < NB; g++) if (v[g] === v[g]) idx.push(g);
   const f = (x) => Math.abs(x) >= 100 ? x.toFixed(0) : Math.abs(x) >= 1 ? x.toFixed(1) : x.toFixed(2);
@@ -1948,6 +1984,7 @@ function ovDraw(I) {
       if (it.state !== "ok") continue;
       const C = ovStyleColor(I, it, d.c.A.q, true);
       if (d.pts) tr.push(ovPts(d.v, C, it.op, 5 + 3.5 * (nPts - 1 - pr++), ovDiffName(d.c)));
+      else if (ovStyle(I, it).mode === "contour") tr.push(...ovIsolines(d.G, d.v, C, it.op, ovDiffName(d.c), ovStyle(I, it)));
       else tr.push(ovHeat(d.G, d.v, C, it.op, ovDiffName(d.c)));
       continue;
     }
@@ -1959,7 +1996,8 @@ function ovDraw(I) {
     if (fr.nodata) { const why = ovWhy(L.ds, ms, I.scale, L.window); it.why = why; notes.push([OV.M.datasets[L.ds].label, why]); if (G.kind === "points") pr++; continue; }
     if (fr.error) { it.why = String(fr.error); continue; }
     const C = ovStyleColor(I, it, L.q, false);
-    if (G.kind === "raster") tr.push(ovHeat(G, fr.v, C, it.op, ovName(L)));
+    if (G.kind === "raster" && ovStyle(I, it).mode === "contour") tr.push(...ovIsolines(G, fr.v, C, it.op, ovName(L), ovStyle(I, it)));
+    else if (G.kind === "raster") tr.push(ovHeat(G, fr.v, C, it.op, ovName(L)));
     else tr.push(ovPts(fr.v, C, it.op, 5 + 3.5 * (nPts - 1 - pr++), ovName(L)));
   }
   Plotly.react(I.el.map, tr, mapLayout({ uirevision: I.key, hovermode: "closest" }), CFG);
@@ -2006,6 +2044,8 @@ function ovStrip(I) {
 }
 
 /* ---- layer list */
+const ovModeHTML = (I, it) => { const m = ovStyle(I, it).mode || "fill";
+  return `<span class="seg mini" role="group" aria-label="Draw as"><button type="button" data-a="mode" data-v="fill" aria-pressed="${m === "fill"}">Fill</button><button type="button" data-a="mode" data-v="contour" aria-pressed="${m === "contour"}">Contours</button></span>`; };
 function ovRowHTML(I, it, n, N) {
   const btns = `<span class="ovl-btns"><button type="button" data-a="sty" class="sty${it.edit ? " on" : ""}" aria-expanded="${!!it.edit}" title="Colours and range">Colours</button><button type="button" data-a="up" ${n === 0 ? "disabled" : ""} aria-label="Move up" title="Move up">▲</button><button type="button" data-a="down" ${n === N - 1 ? "disabled" : ""} aria-label="Move down" title="Move down">▼</button><button type="button" data-a="rm" aria-label="Remove layer" title="Remove">✕</button></span>`;
   const op = `<input type="range" min="0" max="1" step="0.05" value="${it.op}" data-a="op" aria-label="Opacity" title="Opacity"><span class="op">${Math.round(it.op * 100)}%</span>`;
@@ -2014,12 +2054,12 @@ function ovRowHTML(I, it, n, N) {
     const win = !c.bad && ovWinKey(c.A) !== ovWinKey(c.B) ? `<small style="color:var(--crit)">Different day windows: ${c.A.window} vs ${c.B.window}.</small>` : "";
     return `<li class="ovl${it.on ? "" : " off"}" data-uid="${it.uid}"><div class="ovl-top"><input type="checkbox" data-a="on" ${it.on ? "checked" : ""} aria-label="Show layer"><span class="sw" style="background:var(--ink-2)"></span>
       <span class="ovl-name"><b>Difference A − B</b>${c.bad ? `<small style="color:var(--crit)">${c.bad}</small>` : `<small>${ovDiffName(c)}, ${c.pts ? "at the gauges (raster value of the gauge's cell)" : "on " + OV.M.datasets[c.A.ds].label + "'s grid (nearest cell of B)"}</small>${win}`}</span><span class="badge" hidden></span>${btns}</div>
-      <div class="ovl-diff">A ${sel(0)} − B ${sel(1)}</div><div class="ovl-bot">${op}${c.bad ? "" : ovCbar(ovStyleColor(I, it, c.A.q, true))}</div>${it.edit && !c.bad ? ovStyleHTML(I, it, c.A.q, true) : ""}</li>`;
+      <div class="ovl-diff">A ${sel(0)} − B ${sel(1)}</div><div class="ovl-bot">${op}${!c.bad && !c.pts ? ovModeHTML(I, it) : ""}${c.bad ? "" : ovCbar(ovStyleColor(I, it, c.A.q, true))}</div>${it.edit && !c.bad ? ovStyleHTML(I, it, c.A.q, true) : ""}</li>`;
   }
   const id = ovId(it.base, I.scale), L = ovLay(id || ovAnyId(it.base)), d = OV.M.datasets[L.ds];
   return `<li class="ovl${it.on ? "" : " off"}${id ? "" : " dis"}" data-uid="${it.uid}"><div class="ovl-top"><input type="checkbox" data-a="on" ${it.on ? "checked" : ""} ${id ? "" : "disabled"} aria-label="Show layer"><span class="sw" style="background:var(${ovDsCol(L.ds)})"></span>
     <span class="ovl-name"><b>${d.label}</b> ${L.label}<small>${d.kind === "points" ? "gauges" : L.ds === "ed" ? "1/3° display grid" : "0.25° cells"} · <b class="win">${L.window}</b></small>${L.note ? `<small class="nt">${L.note}</small>` : ""}</span><span class="badge" hidden></span>${btns}</div>
-    <div class="ovl-bot">${op}${ovCbar(ovStyleColor(I, it, L.q, false))}</div>${it.edit ? ovStyleHTML(I, it, L.q, false) : ""}</li>`;
+    <div class="ovl-bot">${op}${d.kind === "raster" ? ovModeHTML(I, it) : ""}${ovCbar(ovStyleColor(I, it, L.q, false))}</div>${it.edit ? ovStyleHTML(I, it, L.q, false) : ""}</li>`;
 }
 function ovCatalog(I) {   // [[dataset label, [[base, label], ...]], ...] for this time step
   return ["pc", "ed", "e5"].map((ds) => [OV.M.datasets[ds].label + (I.scale === "h" && !OV.M.datasets[ds].hourly ? " (daily only)" : ""),
@@ -2158,7 +2198,7 @@ function ovInit(key) {
     <div class="panel">
       <div class="ov-lhead"><h2>Layers</h2><label class="lock"><input type="checkbox" data-r="lock"> Same colour range for the same variable</label></div>
       <div class="ov-add"><select data-r="addSel" aria-label="Layer to add"></select><button type="button" class="pri" data-r="add">+ Add layer</button><button type="button" class="sec" data-r="addDiff">+ Difference layer</button></div>
-      <p class="sub" style="margin:8px 0 8px">Top of the list is drawn on top. "Colours" sets each layer's colour scale and range. Strips under the slider show when each shown layer has data.</p>
+      <p class="sub" style="margin:8px 0 8px">Top of the list is drawn on top. "Colours" sets each layer's colour scale and range; "Contours" draws a grid layer as labelled lines, so two fields of one dataset can be read together. Strips under the slider show when each shown layer has data.</p>
       <ul class="ov-layers" data-r="list"></ul>
       <p class="note" style="margin-top:12px">Precomputed for the overlay: daily ${dPer}; hourly ${hPer}. CAMELSH: all ${NB.toLocaleString("en-US")} gauges. ERA5-DAYMET: ${M2.datasets.ed.note}. ERA5 0.25°: ${M2.datasets.e5.note}. Values are int16-quantised (0.05 °C, 0.05 mm d⁻¹, 0.01 mm h⁻¹), ${sizeMB} MB in ${nFiles} files, loaded by month or event as needed. Days a dataset does not store (Dec 31 of leap years, years outside its record) are drawn as no data, never interpolated. Exact statistics are on the other pages.</p>
     </div>
@@ -2198,6 +2238,7 @@ function ovInit(key) {
     if (a === "on") { it.on = e.target.checked; ovItemsChanged(I); }
     else if (a === "d0" || a === "d1") { it.diff[+a[1]] = e.target.value; it.style = null; ovItemsChanged(I); }
     else if (a === "rev") { ovStyle(I, it).rev = e.target.checked; ovSave(I); ovList(I); ovRequest(I); }
+    else if (a === "step") { const v = parseFloat(e.target.value); ovStyle(I, it).step = v > 0 ? v : null; ovSave(I); ovList(I); ovRequest(I); }
     else if (a === "lo" || a === "hi") {
       const v = parseFloat(e.target.value); if (!isFinite(v)) return;
       const q = it.diff ? ovDiffCheck(I, it).A.q : ovLay(ovId(it.base, I.scale) || ovAnyId(it.base)).q, rk = q + (it.diff ? ":diff" : "");
@@ -2214,6 +2255,12 @@ function ovInit(key) {
     const bt = e.target.closest("button[data-a]"); if (!bt) return; const li = bt.closest("li[data-uid]"), n = I.items.findIndex((x) => String(x.uid) === li.dataset.uid), it = I.items[n];
     if (bt.dataset.a === "sty") { it.edit = !it.edit; ovList(I); return; }
     if (bt.dataset.a === "pal") { ovStyle(I, it).pal = bt.dataset.v; ovSave(I); ovList(I); ovRequest(I); return; }
+    if (bt.dataset.a === "mode") {
+      const st = ovStyle(I, it); st.mode = bt.dataset.v;
+      // lines in the same palette as a filled layer underneath are hard to see: switch them to greys
+      if (st.mode === "contour" && I.items.some((x) => x !== it && x.on && (ovStyle(I, x).mode || "fill") === "fill" && ovStyle(I, x).pal === st.pal)) st.pal = "greys";
+      ovSave(I); ovList(I); ovRequest(I); return;
+    }
     if (bt.dataset.a === "reset") {
       const q = it.diff ? ovDiffCheck(I, it).A.q : ovLay(ovId(it.base, I.scale) || ovAnyId(it.base)).q;
       it.style = null; if (I.saved) delete I.saved[ovItemKey(it)]; if (I.lock) delete I.ranges[q + (it.diff ? ":diff" : "")];
