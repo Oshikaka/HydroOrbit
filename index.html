@@ -164,6 +164,11 @@ nav.groups button[aria-current="true"]:hover{border-color:var(--ink)}
 .pagehead .gnote b{color:var(--ink-2);font-weight:600}
 .pagehead .gnote code{font-family:var(--mono);font-size:.92em;background:var(--sunk);padding:0 4px;border-radius:3px}
 section.tab{padding-top:14px}
+.e5opts{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;flex-basis:100%}
+.ds-head .e5opts .seg{margin-left:0}
+.sub.fx{min-height:3.2em}
+.panel.pin{display:flex;flex-direction:column}
+.panel.pin>.plot{margin-top:auto}
 .ds4{grid-template-columns:repeat(4,minmax(0,1fr))}
 @media (max-width:1100px){.ds4{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:640px){.ds4{grid-template-columns:minmax(0,1fr)}}
@@ -430,10 +435,10 @@ section.tab{padding-top:14px}
     <div id="e5Body" hidden>
       <div class="findings" id="e5Facts" style="grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr))"></div>
 
-      <div class="ds-head"><h2>Grid and domain</h2><p class="sub">Same box, two grids: 120 × 240 native ERA5 cells against 180 × 360 ERA5-DAYMET cells. The outline is ERA5-DAYMET's land mask, which covers the contiguous US only. ERA5-DAYMET's static fields come from the Daymet 10′ dataset; its weather fields come from ERA5 (variable check below).</p><div class="seg" id="e5Static" role="group" aria-label="Static field"></div></div>
+      <div class="ds-head"><h2>Grid and domain</h2><p class="sub">Same box, two grids: 120 × 240 native ERA5 cells against 180 × 360 ERA5-DAYMET cells. The outline is ERA5-DAYMET's land mask, which covers the contiguous US only. ERA5-DAYMET's static fields come from the Daymet 10′ dataset; its weather fields come from ERA5 (variable check below).</p><div class="seg" id="e5Static" role="group" aria-label="Field"></div><div class="e5opts" id="e5StaticOpts"><div class="seg" id="e5View" role="group" aria-label="ERA5 view"></div><div class="seg" id="e5TDay" role="group" aria-label="Day"></div><div class="seg" id="e5TKind" role="group" aria-label="Temperature field"></div></div></div>
       <div class="grid g2">
-        <div class="panel"><h2><span class="sw e5"></span> ERA5 0.25° US</h2><p class="sub" id="e5StaticSub"></p><div class="seg mini" id="e5OroView" role="group" aria-label="ERA5 orography view" style="margin-bottom:6px"></div><div class="plot" id="e5StaticMap"></div></div>
-        <div class="panel"><h2><span class="sw ed"></span> ERA5-DAYMET 10′</h2><p class="sub" id="edStaticSub"></p><div class="plot" id="edStaticMap"></div></div>
+        <div class="panel pin"><h2 id="e5StaticTitle"><span class="sw e5"></span> ERA5 0.25° US</h2><p class="sub fx" id="e5StaticSub"></p><div class="plot" id="e5StaticMap"></div></div>
+        <div class="panel pin"><h2 id="edStaticTitle"><span class="sw ed"></span> ERA5-DAYMET 10′</h2><p class="sub fx" id="edStaticSub"></p><div class="plot" id="edStaticMap"></div></div>
       </div>
 
       <div class="ds-head"><h2>Sharper than 0.25°? Interpolation vs lapse-rate correction</h2><p class="sub" id="dsSub">Bilinear interpolation only smooths ERA5. Adding real detail needs real high-resolution information: here the Daymet terrain and a lapse rate fitted to Daymet.</p></div>
@@ -1113,7 +1118,7 @@ function e5Init() {
   ].join("");
   const segE = (id, list, key, cb) => { const el = $(id); el.innerHTML = list.map(([v, l]) => `<button type="button" data-v="${v}" aria-pressed="${String(E[key]) === String(v)}">${l}</button>`).join("");
     el.onclick = (e) => { const b = e.target.closest("button"); if (!b || b.disabled) return; E[key] = b.dataset.v; el.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", x === b ? "true" : "false")); cb(); }; };
-  segE("e5Static", [["oro", "Orography"], ["lsm", "Land–sea mask"], ["lc", "Land cover"]], "st", e5Static);
+  segE("e5Static", [["oro", "Orography"], ["lsm", "Land–sea mask"], ["lc", "Land cover"], ["t2m", "2 m temperature"]], "st", e5Static);
   opts("e5Event", M5.events.map((ev, i) => [i, `${ev.date} · ${ev.label}`]), 0);
   $("e5Event").onchange = (e) => { E.ev = +e.target.value; E.hv = M5.events[E.ev].focus; segE("e5HourVar", M5.hourly_vars.map((h) => [h.key, h.label]), "hv", e5Hour); e5Hour(); e5Day(); };
   E.hv = M5.events[0].focus;
@@ -1147,44 +1152,60 @@ function e5Init() {
 function e5Static() {
   const g5 = E.M.grid_e5, gd = E.M.grid_ed, st = E.st;
   if (st === "lc" && !VC.M) { vcLoad().then(e5Static); return; }
-  const f32 = (b64) => { const bin = atob(b64), u = new Uint8Array(bin.length); for (let k = 0; k < bin.length; k++) u[k] = bin.charCodeAt(k); return new Float32Array(u.buffer); };
-  const a = st === "oro" ? earr("oro_e5") : st === "lsm" ? earr("lsm_e5") : f32(VC.M.landcover.e5);
-  const b = st === "oro" ? earr("oro_ed") : st === "lsm" ? earr("mask_ed") : f32(VC.M.landcover.ed);
-  const cs = st === "oro" ? { scale: seqScale(), zmin: 0, zmax: 3500 } : st === "lsm" ? { scale: [[0, css("--sunk")], [1, css("--seq2")]], zmin: 0, zmax: 1 }
-    : { scale: [[0, "#440154"], [0.25, "#3b528b"], [0.5, "#21918c"], [0.75, "#5ec962"], [1, "#fde725"]], zmin: 1, zmax: 19 };
-  const unit = st === "oro" ? "m" : st === "lsm" ? "" : "class";
-  // ERA5 orography: native 0.25° or bilinear to the 1/6° ERA5-DAYMET grid (the lapse-rate option only exists for temperature)
-  const ov = $("e5OroView");
-  if (!ov.dataset.init) {
-    ov.dataset.init = "1"; E.oroView = E.oroView || "native";
-    ov.innerHTML = [["native", "Native 0.25°"], ["bil", "Bilinear → 1/6°"], ["lap", "+ lapse rate"]].map(([v, l]) => `<button type="button" data-v="${v}" aria-pressed="${E.oroView === v}"${v === "lap" ? ' disabled title="A lapse-rate correction changes temperature, not terrain: it uses the Daymet terrain shown on the right. See the Sharper than 0.25° block below."' : ""}>${l}</button>`).join("");
-    ov.onclick = (e) => { const b = e.target.closest("button"); if (!b || b.disabled) return; E.oroView = b.dataset.v; ov.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", x === b ? "true" : "false")); e5Static(); };
+  if (st === "t2m" && !DSP.M) { DSP.load().then(e5Static); return; }
+  // shared option row (one row above both maps, so the two panels stay aligned)
+  E.view = E.view || { oro: "native", t2m: "lap" }; E.tday = E.tday || "summer"; E.tkind = E.tkind || "tmax";
+  const segX = (id, list, get, set) => { const el = $(id); el.innerHTML = list.map(([v, l]) => `<button type="button" data-v="${v}" aria-pressed="${get() === v}">${l}</button>`).join("");
+    el.onclick = (e) => { const b = e.target.closest("button"); if (!b) return; set(b.dataset.v); e5Static(); }; };
+  const hasView = st === "oro" || st === "t2m";
+  $("e5StaticOpts").style.display = hasView ? "" : "none";
+  if (hasView) segX("e5View", [["native", "Native 0.25°"], ["bil", "Bilinear → 1/6°"]].concat(st === "t2m" ? [["lap", "Bilinear + lapse rate"]] : []), () => E.view[st], (v) => { E.view[st] = v; });
+  $("e5TDay").style.display = $("e5TKind").style.display = st === "t2m" ? "" : "none";
+  if (st === "t2m") {
+    segX("e5TDay", DSP.M.days.map((d) => [d.key, `${d.key === "winter" ? "Winter" : "Summer"} · ${d.date}`]), () => E.tday, (v) => { E.tday = v; });
+    segX("e5TKind", DSP.M.kinds.map((k) => [k.key, k.label.charAt(0).toUpperCase() + k.label.slice(1)]), () => E.tkind, (v) => { E.tkind = v; });
   }
-  ov.style.display = st === "oro" ? "" : "none";
-  const bil = st === "oro" && E.oroView === "bil";
-  let aL = a, gL = g5;
-  if (bil) {
-    aL = new Float32Array(gd.ny * gd.nx); gL = gd;
-    for (let y = 0; y < gd.ny; y++) {
-      const fy = Math.min(g5.ny - 1.000001, Math.max(0, (gd.lat0 + y * gd.d - g5.lat0) / g5.d)), y0 = Math.floor(fy), wy = fy - y0;
-      for (let x = 0; x < gd.nx; x++) {
-        const fx = Math.min(g5.nx - 1.000001, Math.max(0, (gd.lon0 + x * gd.d - g5.lon0) / g5.d)), x0 = Math.floor(fx), wx = fx - x0, i = y0 * g5.nx + x0;
-        aL[y * gd.nx + x] = (1 - wy) * ((1 - wx) * a[i] + wx * a[i + 1]) + wy * ((1 - wx) * a[i + g5.nx] + wx * a[i + g5.nx + 1]);
-      }
-    }
+  const f32 = (b64) => { const bin = atob(b64), u = new Uint8Array(bin.length); for (let k = 0; k < bin.length; k++) u[k] = bin.charCodeAt(k); return new Float32Array(u.buffer); };
+  const bilinear = (a) => { const out = new Float32Array(gd.ny * gd.nx);
+    for (let y = 0; y < gd.ny; y++) { const fy = Math.min(g5.ny - 1.000001, Math.max(0, (gd.lat0 + y * gd.d - g5.lat0) / g5.d)), y0 = Math.floor(fy), wy = fy - y0;
+      for (let x = 0; x < gd.nx; x++) { const fx = Math.min(g5.nx - 1.000001, Math.max(0, (gd.lon0 + x * gd.d - g5.lon0) / g5.d)), x0 = Math.floor(fx), wx = fx - x0, i = y0 * g5.nx + x0;
+        out[y * gd.nx + x] = (1 - wy) * ((1 - wx) * a[i] + wx * a[i + 1]) + wy * ((1 - wx) * a[i + g5.nx] + wx * a[i + g5.nx + 1]); } }
+    return out; };
+  const mx = (v) => { let m = -Infinity; for (const x of v) if (x > m) m = x; return m; };
+  let aL, gL, b, cs, unit, subL, subR, titleR = `<span class="sw ed"></span> ERA5-DAYMET 10′`;
+  if (st === "t2m") {
+    const key = `conus_${E.tday}_${E.tkind}`, v = E.view.t2m, sts = DSP.M.conus.stats[key], gc = DSP.M.conus.grid;
+    aL = DSP.arr(`${key}_${v === "native" ? "e5" : v}`); gL = v === "native" ? g5 : gc; b = DSP.arr(`${key}_dm`);
+    const vals = []; for (const x of b) if (isFinite(x)) vals.push(x); vals.sort((p, q) => p - q);
+    cs = { scale: divScale(), zmin: vals[Math.floor(vals.length * 0.02)], zmax: vals[Math.floor(vals.length * 0.98)] }; unit = "°C";
+    const day = DSP.M.days.find((d) => d.key === E.tday).date, kl = DSP.M.kinds.find((k) => k.key === E.tkind).label;
+    const sl = (x) => `vs Daymet: RMSE ${fmt(x.rmse, 2)} °C, r ${fmt(x.r, 3)}`;
+    subL = v === "native" ? `2 m temperature, ${kl}, ${day} (UTC day) · ERA5 0.25° cells, as stored.`
+      : v === "bil" ? `2 m temperature, ${kl}, ${day} · bilinear to 1/6° (this is what ERA5-DAYMET's own weather fields are): smoother, no new detail. ${sl(sts.bil)}.`
+      : `2 m temperature, ${kl}, ${day} · bilinear to 1/6° + lapse rate × (ERA5 terrain − Daymet terrain), rates fitted to Daymet (not on 2019). ${sl(sts.lap)}.`;
+    titleR = `<span class="sw ed"></span> Daymet 10′ (reference)`;
+    subR = `${E.tkind === "tmean" ? "(tmax + tmin) / 2" : kl} from the Daymet 10′ dataset, local day, CONUS land. Reference only: ERA5-DAYMET's 2 m temperature is ERA5, not this.`;
+  } else {
+    const a = st === "oro" ? earr("oro_e5") : st === "lsm" ? earr("lsm_e5") : f32(VC.M.landcover.e5);
+    b = st === "oro" ? earr("oro_ed") : st === "lsm" ? earr("mask_ed") : f32(VC.M.landcover.ed);
+    cs = st === "oro" ? { scale: seqScale(), zmin: 0, zmax: 3500 } : st === "lsm" ? { scale: [[0, css("--sunk")], [1, css("--seq2")]], zmin: 0, zmax: 1 }
+      : { scale: [[0, "#440154"], [0.25, "#3b528b"], [0.5, "#21918c"], [0.75, "#5ec962"], [1, "#fde725"]], zmin: 1, zmax: 19 };
+    unit = st === "oro" ? "m" : st === "lsm" ? "" : "class";
+    const bil = st === "oro" && E.view.oro === "bil";
+    aL = bil ? bilinear(a) : a; gL = bil ? gd : g5;
+    const SUB = {
+      oro: ["Orography (m) · ERA5's model terrain: the file stores surface geopotential (m² s⁻²), divided here by g · 0.25° grid (≈ 28 km).",
+        "Orography (m) · identical, cell for cell, to the orography of the Daymet 10′ dataset; not ERA5's · 1/6° grid (≈ 18.5 km)."],
+      lsm: ["Land–sea mask (0–1) · ERA5's land fraction, a physical field that also covers Canada and Mexico · 0.25° grid (≈ 28 km).",
+        "Land–sea mask (0 or 1) · identical to the Daymet 10′ dataset's mask: binary, contiguous-US land only · 1/6° grid (≈ 18.5 km)."],
+      lc: ["Land cover (class 1–19) · landcover field of the ERA5 0.25° store · 0.25° grid (≈ 28 km).",
+        "Land cover (class 1–19) · identical to the Daymet 10′ dataset's landcover; not ERA5's · 1/6° grid (≈ 18.5 km)."] }[st];
+    subL = bil ? `Orography (m) · ERA5's model terrain bilinearly interpolated to 1/6° (the ERA5-DAYMET grid): smoother, but no new detail; the highest point drops from ${fmt(mx(a), 0)} m to ${fmt(mx(aL), 0)} m.` : SUB[0];
+    subR = SUB[1];
   }
   draw("e5StaticMap", [heat(gL, toZ(aL, gL), cs, unit), outline()], e5Map());
   draw("edStaticMap", [heat(gd, toZ(b, gd), cs, unit), outline()], e5Map());
-  const SUB = {
-    oro: ["Orography (m) · ERA5's model terrain: the file stores surface geopotential (m² s⁻²), divided here by g · 0.25° grid (≈ 28 km).",
-      "Orography (m) · identical, cell for cell, to the orography of the Daymet 10′ dataset; not ERA5's · 1/6° grid (≈ 18.5 km)."],
-    lsm: ["Land–sea mask (0–1) · ERA5's land fraction, a physical field that also covers Canada and Mexico · 0.25° grid (≈ 28 km).",
-      "Land–sea mask (0 or 1) · identical to the Daymet 10′ dataset's mask: binary, contiguous-US land only · 1/6° grid (≈ 18.5 km)."],
-    lc: ["Land cover (class 1–19) · landcover field of the ERA5 0.25° store · 0.25° grid (≈ 28 km).",
-      "Land cover (class 1–19) · identical to the Daymet 10′ dataset's landcover; not ERA5's · 1/6° grid (≈ 18.5 km)."] }[st];
-  const mx = (v) => { let m = -Infinity; for (const x of v) if (x > m) m = x; return m; };
-  $("e5StaticSub").textContent = bil ? `Orography (m) · ERA5's model terrain bilinearly interpolated to 1/6° (the ERA5-DAYMET grid): smoother, but no new detail; the highest point drops from ${fmt(mx(a), 0)} m to ${fmt(mx(aL), 0)} m.` : SUB[0];
-  $("edStaticSub").textContent = SUB[1];
+  $("e5StaticSub").textContent = subL; $("edStaticSub").textContent = subR; $("edStaticTitle").innerHTML = titleR;
 }
 
 function e5Hour() {
@@ -2466,7 +2487,13 @@ function showTab(t) {
   $("tabs").innerHTML = g.pages.map(([k, l]) => `<button role="tab" type="button" data-tab="${k}" aria-selected="${k === t}">${l}</button>`).join("");
   document.querySelectorAll("section.tab").forEach((s) => s.hidden = s.id !== "tab-" + t);
   document.querySelectorAll("section.tab[hidden] .js-plotly-plot").forEach((el) => {
-    if ((el._fullData || []).some((d) => /gl$/.test(d.type))) { Plotly.purge(el); el._bound = false; el._ovb = false; }
+    if ((el._fullData || []).some((d) => /gl$/.test(d.type))) {
+      el.querySelectorAll("canvas").forEach((c) => {   // release the GL contexts now instead of waiting for garbage collection
+        const g = c.getContext("webgl2") || c.getContext("webgl") || c.getContext("experimental-webgl"), x = g && g.getExtension("WEBGL_lose_context");
+        if (x) x.loseContext();
+      });
+      Plotly.purge(el); el._bound = false; el._ovb = false;
+    }
   });
   try { if (/^[a-z0-9-]+$/.test(t)) history.replaceState(null, "", "#" + t); } catch (e) {}
   render();
