@@ -164,6 +164,9 @@ nav.groups button[aria-current="true"]:hover{border-color:var(--ink)}
 .pagehead .gnote b{color:var(--ink-2);font-weight:600}
 .pagehead .gnote code{font-family:var(--mono);font-size:.92em;background:var(--sunk);padding:0 4px;border-radius:3px}
 section.tab{padding-top:14px}
+.ds4{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:1100px){.ds4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:640px){.ds4{grid-template-columns:minmax(0,1fr)}}
 .cal.c9{grid-template-columns:170px repeat(9,minmax(72px,1fr));min-width:820px}
 .cal .na{color:var(--ink-3)}
 .cal .ok{color:var(--good);font-weight:600}
@@ -431,6 +434,23 @@ section.tab{padding-top:14px}
       <div class="grid g2">
         <div class="panel"><h2><span class="sw e5"></span> ERA5 0.25° US</h2><p class="sub" id="e5StaticSub"></p><div class="plot" id="e5StaticMap"></div></div>
         <div class="panel"><h2><span class="sw ed"></span> ERA5-DAYMET 10′</h2><p class="sub" id="edStaticSub"></p><div class="plot" id="edStaticMap"></div></div>
+      </div>
+
+      <div class="ds-head"><h2>Sharper than 0.25°? Interpolation vs lapse-rate correction</h2><p class="sub" id="dsSub">Bilinear interpolation only smooths ERA5. Adding real detail needs real high-resolution information: here the Daymet terrain and a lapse rate fitted to Daymet.</p></div>
+      <div class="controls">
+        <div class="ctl"><label for="dsRegion">Region</label><select id="dsRegion"></select></div>
+        <div class="ctl"><label>Day</label><div class="seg" id="dsDay" role="group" aria-label="Day"></div></div>
+        <div class="ctl"><label>Field</label><div class="seg" id="dsKind" role="group" aria-label="Field"></div></div>
+      </div>
+      <div class="grid ds4">
+        <div class="panel"><h3><span class="sw e5"></span> ERA5 0.25° native</h3><p class="sub" id="dsS0"></p><div class="plot" id="dsP0"></div></div>
+        <div class="panel"><h3>ERA5 bilinear → 2.5′</h3><p class="sub" id="dsS1"></p><div class="plot" id="dsP1"></div></div>
+        <div class="panel"><h3>ERA5 bilinear + lapse rate</h3><p class="sub" id="dsS2"></p><div class="plot" id="dsP2"></div></div>
+        <div class="panel"><h3>Daymet 2.5′ (reference)</h3><p class="sub" id="dsS3"></p><div class="plot" id="dsP3"></div></div>
+      </div>
+      <div class="grid g2" style="margin-top:16px">
+        <div class="panel"><h3>Validation over the contiguous US</h3><p class="sub" id="dsValSub"></p><div class="scroll"><table class="data" id="dsTable"></table></div></div>
+        <div id="dsCard"></div>
       </div>
 
       <div class="ds-head"><h2>Variable by variable: what each ERA5-DAYMET field is</h2><p class="sub" id="vcSub">Every variable both datasets store, compared same name against same name.</p></div>
@@ -1302,7 +1322,46 @@ function renderE5() {
       .catch((e) => { $("e5Loading").textContent = "Could not load data/era5us.json. " + e; });
     return;
   }
-  e5Static(); e5Hour(); e5Day(); e5Pt(); e5Table(); e5Cell(); e5Ser(); e5Scan(); e5Prov(); e5Vars();
+  e5Static(); e5Hour(); e5Day(); e5Pt(); e5Table(); e5Cell(); e5Ser(); e5Scan(); e5Prov(); e5Vars(); e5Down();
+}
+
+/* bilinear vs bilinear + lapse rate (data/downscale.json, from downscale_demo_data.py) */
+function e5Down() {
+  if (!DSP.M) { DSP.load().then(() => { if (S.tab === "era5us") e5Down(); }).catch((e) => { $("dsSub").textContent = "Could not load data/downscale.json. " + e; }); return; }
+  const m = DSP.M;
+  if (!DSS.ready) {
+    DSS.ready = true;
+    opts("dsRegion", m.regions.map((r) => [r.key, r.label]), DSS.region);
+    $("dsRegion").onchange = (e) => { DSS.region = e.target.value; e5Down(); };
+    segObj("dsDay", m.days.map((d) => [d.key, `${d.key === "winter" ? "Winter" : "Summer"} · ${d.date}`]), DSS, "day", e5Down);
+    segObj("dsKind", m.kinds.map((k) => [k.key, k.label.charAt(0).toUpperCase() + k.label.slice(1)]), DSS, "kind", e5Down);
+    const v = m.validation, S2 = v.summary, row = (lab, a, b, d) => `<tr><td>${lab}</td><td>${fmt(a.rmse, d)} → <b>${fmt(b.rmse, d)}</b></td><td>${fmt(a.r, 3)} → <b>${fmt(b.r, 3)}</b></td><td>${sgn(a.bias, 2)} → ${sgn(b.bias, 2)}</td></tr>`;
+    const KL = { tmean: "Daily mean temperature", tmax: "Daily max temperature", tmin: "Daily min temperature", prcp: "Precipitation, daily (climatological ratio)" };
+    let rows = "";
+    for (const k of ["tmean", "tmax", "tmin", "prcp"]) for (const reg of ["all", "mountains"]) rows += row(`${reg === "all" ? KL[k] : ""} <span style="color:var(--ink-3)">${reg === "all" ? "all land" : "above 1500 m"}</span>`, S2[k][reg].bilinear, S2[k][reg].downscaled, k === "prcp" ? 2 : 2);
+    const pa = S2.prcp_annual_total;
+    rows += `<tr><td>Precipitation, annual total <span style="color:var(--ink-3)">all land, mm</span></td><td>${fmt(pa.bilinear.rmse, 0)} → <b>${fmt(pa.downscaled.rmse, 0)}</b></td><td>${fmt(pa.bilinear.r, 3)} → <b>${fmt(pa.downscaled.r, 3)}</b></td><td>–</td></tr>`;
+    $("dsTable").innerHTML = `<tr><th>Field</th><th>RMSE (bilinear → corrected)</th><th>r</th><th>Bias</th></tr>` + rows;
+    $("dsValSub").textContent = `Against Daymet 2.5′ on every third day of ${v.validation_years.join(", ")} (parameters fitted on ${v.fit_years[0]}–${v.fit_years[v.fit_years.length - 1]}, odd years). °C, mm per day. ERA5 is aggregated over UTC days and Daymet over local days, which adds the same noise to both columns.`;
+    $("dsCard").innerHTML = cardsHTML([{ st: "info", tag: "What it can and cannot do", h: "Terrain adds detail to temperature, mostly in mountains and summer",
+      p: `The correction is T = bilinear(ERA5) + Γ × (ERA5 terrain − Daymet terrain), with Γ fitted per month and 2.5° tile from Daymet (domain medians about 3 K/km in winter to 5 K/km in summer for the daily mean, steeper for tmax, shallower for tmin). It lowers the error most above 1500 m and in summer; in winter, cold air pooling in valleys breaks the "higher is colder" rule and the gain disappears. Precipitation uses a climatological ratio instead: it improves the long-term pattern (annual totals) but not daily values. Winds and pressure-level fields get interpolation only. In code: <code>aligned_loader.Era5Downscaler</code>.` }]);
+  }
+  const R = m.regions.find((r) => r.key === DSS.region), key0 = `${R.key}_${DSS.day}_${DSS.kind}`, st = m.stats[key0];
+  const a0 = DSP.arr(key0 + "_e5"), a1 = DSP.arr(key0 + "_bil"), a2 = DSP.arr(key0 + "_lap"), a3 = DSP.arr(key0 + "_dm");
+  const vals = []; for (const a of [a2, a3]) for (const v of a) if (isFinite(v)) vals.push(v);
+  vals.sort((x, y) => x - y);
+  const lo = vals[Math.floor(vals.length * 0.02)], hi = vals[Math.floor(vals.length * 0.98)];
+  const cs = { scale: divScale(), zmin: lo, zmax: hi };
+  const [la0, la1, lo0, lo1] = R.box;
+  const L = () => base({ margin: { l: 4, r: 4, t: 4, b: 4 }, dragmode: "pan", xaxis: { range: [lo0, lo1], visible: false }, yaxis: { range: [la0, la1], visible: false, scaleanchor: "x", scaleratio: 1.27 } });
+  const day = m.days.find((d) => d.key === DSS.day), kl = m.kinds.find((k) => k.key === DSS.kind).label;
+  [[a0, R.e5], [a1, R.fine], [a2, R.fine], [a3, R.fine]].forEach(([a, g], i) => draw("dsP" + i, [heat(g, toZ(a, g), cs, "°C", i === 3 ? {} : { showscale: false })], L()));
+  const sline = (x) => `vs Daymet: RMSE ${fmt(x.rmse, 2)} °C, r ${fmt(x.r, 3)}, bias ${sgn(x.bias, 2)}`;
+  $("dsS0").textContent = `${kl} 2 m temperature, ${day.date} (UTC day), 0.25° cells`;
+  $("dsS1").textContent = sline(st.bil);
+  $("dsS2").textContent = sline(st.lap);
+  $("dsS3").textContent = `(tmax + tmin) / 2 for the daily mean; local day; land only`.replace("(tmax + tmin) / 2 for the daily mean; ", DSS.kind === "tmean" ? "(tmax + tmin) / 2; " : "");
+  $("dsSub").innerHTML = `Bilinear interpolation only smooths ERA5. Adding real detail needs real high-resolution information: here the Daymet terrain and a lapse rate fitted to Daymet. ${R.label}, ${day.date} (${DSS.day}, not a fitting year); one shared colour scale.`;
 }
 
 /* variable-by-variable check (data/era5us_vars.json, from era5us_varcheck.py) */
@@ -1378,6 +1437,8 @@ const isLeapY = (y) => (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
 
 /* ---------------------------------------------------------------- CAMELSH × ERA5 0.25° (lazy: data/camelsh_era5us.json + x*.b64.txt) */
 const C5 = lazyPack("data/camelsh_era5us.json");
+const DSP = lazyPack("data/downscale.json");
+const DSS = { region: "rockies", day: "summer", kind: "tmax", ready: false };
 const CS = { var: "T2m", scale: "hourly", metric: "r_anom", win: "d", drift: "bias", lagVar: "P", lagBand: "P", leapVar: "T2m", region: "all", ready: false };
 const C5ROW = new Map();
 const C5_METRICS = [
